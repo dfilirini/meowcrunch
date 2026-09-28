@@ -1,0 +1,550 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Мяухрустики</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #4b3852;
+      --muted: #806f86;
+      --cream: #fffaf0;
+      --panel: rgba(255, 255, 255, .88);
+      --pink: #ff6f91;
+      --pink-dark: #dd4f75;
+      --gold: #ffbd43;
+      --shadow: 0 14px 40px rgba(92, 61, 102, .14);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      font-family: ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(255, 218, 142, .45), transparent 28%),
+        radial-gradient(circle at 88% 18%, rgba(255, 167, 193, .33), transparent 27%),
+        linear-gradient(145deg, #fff9e9, #f8efff);
+    }
+
+    button { font: inherit; }
+
+    .app {
+      width: min(1120px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 22px 0 28px;
+    }
+
+    .topbar {
+      position: relative;
+      z-index: 3;
+      display: grid;
+      grid-template-columns: minmax(180px, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, .9);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand h1 {
+      margin: 0 0 4px;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      letter-spacing: -.04em;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stat {
+      min-width: 104px;
+      padding: 9px 12px;
+      border-radius: 15px;
+      background: #fff6da;
+      text-align: center;
+    }
+
+    .stat span {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--muted);
+      font-size: .69rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .stat strong { font-size: 1.05rem; }
+
+    .buy-button {
+      min-height: 52px;
+      padding: 10px 20px;
+      border: 0;
+      border-radius: 16px;
+      color: white;
+      background: linear-gradient(180deg, #ff83a0, var(--pink));
+      box-shadow: 0 6px 0 var(--pink-dark), 0 10px 20px rgba(221, 79, 117, .23);
+      cursor: pointer;
+      transition: transform .15s ease, filter .15s ease, opacity .15s ease;
+    }
+
+    .buy-button:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
+    .buy-button:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-dark); }
+    .buy-button:disabled { cursor: not-allowed; filter: grayscale(.45); opacity: .55; box-shadow: none; }
+    .buy-button small { display: block; margin-top: 2px; opacity: .88; font-size: .73rem; }
+
+    .game-shell {
+      position: relative;
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, .58);
+      box-shadow: var(--shadow);
+    }
+
+    .scene {
+      position: relative;
+      height: clamp(440px, 66vh, 720px);
+      min-height: 440px;
+      overflow: hidden;
+      border: 2px solid rgba(255, 255, 255, .9);
+      border-radius: 21px;
+      background:
+        radial-gradient(circle, rgba(255,255,255,.68) 2px, transparent 2.5px) 0 0 / 28px 28px,
+        linear-gradient(180deg, #cfefff 0 62%, #d9f2c1 62% 100%);
+      box-shadow: inset 0 -20px 50px rgba(84, 151, 91, .08);
+      user-select: none;
+    }
+
+    .scene::before,
+    .scene::after {
+      content: "";
+      position: absolute;
+      bottom: -60px;
+      width: 330px;
+      height: 180px;
+      border-radius: 50%;
+      background: rgba(125, 204, 118, .2);
+      pointer-events: none;
+    }
+
+    .scene::before { left: -100px; }
+    .scene::after { right: -80px; }
+
+    .hint {
+      position: absolute;
+      z-index: 1;
+      top: 16px;
+      left: 50%;
+      width: max-content;
+      max-width: calc(100% - 28px);
+      padding: 8px 13px;
+      border-radius: 999px;
+      color: #705f77;
+      background: rgba(255,255,255,.72);
+      font-size: .78rem;
+      text-align: center;
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+
+    .cat {
+      position: absolute;
+      z-index: 2;
+      width: clamp(82px, 10vw, 104px);
+      aspect-ratio: 1;
+      padding: 0;
+      border: 3px solid transparent;
+      border-radius: 28px;
+      background: transparent;
+      cursor: grab;
+      touch-action: none;
+      filter: drop-shadow(0 8px 7px rgba(77, 58, 84, .18));
+      transform: translate(-50%, -50%);
+      transition: filter .18s ease, border-color .18s ease, background .18s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .cat:hover { filter: drop-shadow(0 10px 9px rgba(77, 58, 84, .25)); }
+    .cat:active img { transform: scale(1.06); }
+    .cat.dragging {
+      z-index: 7;
+      cursor: grabbing;
+      border-color: #fff;
+      background: rgba(255, 190, 68, .42);
+      box-shadow: 0 0 0 4px var(--gold), 0 0 24px rgba(255, 189, 67, .85);
+    }
+
+    .cat img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
+      transition: transform .13s ease;
+    }
+
+    .level-badge {
+      position: absolute;
+      right: -5px;
+      bottom: -3px;
+      min-width: 27px;
+      height: 27px;
+      padding: 4px;
+      border: 2px solid white;
+      border-radius: 999px;
+      color: white;
+      background: #7557ba;
+      box-shadow: 0 3px 8px rgba(72, 49, 103, .25);
+      font-size: .75rem;
+      font-weight: 900;
+      line-height: 15px;
+      pointer-events: none;
+    }
+
+    .coin-pop {
+      position: absolute;
+      z-index: 10;
+      color: #a75d00;
+      font-size: 1.1rem;
+      font-weight: 950;
+      text-shadow: 0 2px 0 white, 1px 0 0 white, -1px 0 0 white;
+      transform: translate(-50%, -50%);
+      animation: float-up .85s ease-out forwards;
+      pointer-events: none;
+    }
+
+    .merge-burst {
+      position: absolute;
+      z-index: 8;
+      width: 35px;
+      height: 35px;
+      border: 8px solid rgba(255, 197, 61, .92);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: burst .55s ease-out forwards;
+      pointer-events: none;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      bottom: 24px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      color: white;
+      background: rgba(74, 53, 82, .92);
+      box-shadow: 0 8px 24px rgba(0,0,0,.2);
+      opacity: 0;
+      transform: translate(-50%, 16px);
+      transition: opacity .2s, transform .2s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @keyframes float-up {
+      from { opacity: 0; transform: translate(-50%, -20%) scale(.7); }
+      25% { opacity: 1; }
+      to { opacity: 0; transform: translate(-50%, -150%) scale(1.15); }
+    }
+
+    @keyframes burst {
+      from { opacity: 1; transform: translate(-50%, -50%) scale(.2); }
+      to { opacity: 0; transform: translate(-50%, -50%) scale(4); }
+    }
+
+    @media (max-width: 760px) {
+      .app { width: min(100% - 16px, 1120px); padding-top: 8px; }
+      .topbar { grid-template-columns: 1fr; padding: 14px; gap: 12px; }
+      .brand { text-align: center; }
+      .controls { justify-content: center; }
+      .stat { min-width: 92px; }
+      .buy-button { flex: 1 1 100%; }
+      .game-shell { margin-top: 10px; padding: 7px; }
+      .scene { min-height: 470px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>🐾 Мяухрустики</h1>
+        <p>Гладь, перемещай и объединяй одинаковых котиков</p>
+      </div>
+      <div class="controls" aria-label="Игровые показатели">
+        <div class="stat"><span>Монеты</span><strong id="coins">100 🪙</strong></div>
+        <div class="stat"><span>Макс. уровень</span><strong id="maxLevel">1</strong></div>
+        <div class="stat"><span>Покупка</span><strong id="buyLevel">Ур. 1</strong></div>
+        <button class="buy-button" id="buyButton" type="button">
+          Купить мяухрустика
+          <small id="buyCost">10 монет · уровень 1</small>
+        </button>
+      </div>
+    </header>
+
+    <section class="game-shell" aria-label="Игровое поле">
+      <div class="scene" id="scene">
+        <div class="hint">Погладь котика курсором · перетащи к такому же для слияния</div>
+      </div>
+    </section>
+  </main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    "use strict";
+
+    const MAX_CAT_LEVEL = 5;
+    const STARTING_COINS = 100;
+    const CAT_MARGIN_PERCENT = 8;
+
+    const state = {
+      coins: STARTING_COINS,
+      maxLevel: 1,
+      nextId: 1,
+      cats: [] // { id, level, x, y }, where x/y are percentages of the scene.
+    };
+
+    const scene = document.getElementById("scene");
+    const coinsEl = document.getElementById("coins");
+    const maxLevelEl = document.getElementById("maxLevel");
+    const buyLevelEl = document.getElementById("buyLevel");
+    const buyCostEl = document.getElementById("buyCost");
+    const buyButton = document.getElementById("buyButton");
+    const toast = document.getElementById("toast");
+    let toastTimer;
+    let drag = null;
+
+    function getBuyLevel() {
+      return Math.max(1, state.maxLevel - 4);
+    }
+
+    function getBuyCost(level = getBuyLevel()) {
+      return 10 * level;
+    }
+
+    function getClickIncome(level) {
+      return level * 2;
+    }
+
+    function randomPosition() {
+      const span = 100 - CAT_MARGIN_PERCENT * 2;
+      return {
+        x: CAT_MARGIN_PERCENT + Math.random() * span,
+        y: 16 + Math.random() * 76
+      };
+    }
+
+    function addCat(level, position = randomPosition()) {
+      const cat = {
+        id: state.nextId++,
+        level: Math.min(level, MAX_CAT_LEVEL),
+        x: Math.max(CAT_MARGIN_PERCENT, Math.min(100 - CAT_MARGIN_PERCENT, position.x)),
+        y: Math.max(13, Math.min(92, position.y))
+      };
+      state.cats.push(cat);
+      state.maxLevel = Math.max(state.maxLevel, cat.level);
+      return cat;
+    }
+
+    function render() {
+      scene.querySelectorAll(".cat").forEach(element => element.remove());
+
+      for (const cat of state.cats) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "cat";
+        button.style.left = `${cat.x}%`;
+        button.style.top = `${cat.y}%`;
+        button.dataset.id = cat.id;
+        button.setAttribute("aria-label", `Мяухрустик, уровень ${cat.level}`);
+
+        const image = document.createElement("img");
+        image.src = `res/cats/${cat.level}.webp`;
+        image.alt = "";
+        image.draggable = false;
+
+        const badge = document.createElement("span");
+        badge.className = "level-badge";
+        badge.textContent = cat.level;
+
+        button.append(image, badge);
+        button.addEventListener("pointerenter", event => petCat(cat.id, event));
+        button.addEventListener("pointerdown", event => startDrag(cat.id, event));
+        scene.append(button);
+      }
+
+      updateInterface();
+    }
+
+    function updateInterface() {
+      const buyLevel = getBuyLevel();
+      const cost = getBuyCost(buyLevel);
+      coinsEl.textContent = `${state.coins} 🪙`;
+      maxLevelEl.textContent = state.maxLevel;
+      buyLevelEl.textContent = `Ур. ${buyLevel}`;
+      buyCostEl.textContent = `${cost} монет · уровень ${buyLevel}`;
+      buyButton.disabled = state.coins < cost;
+    }
+
+    function buyCat() {
+      const level = getBuyLevel();
+      const cost = getBuyCost(level);
+      if (state.coins < cost) return;
+
+      state.coins -= cost;
+      addCat(level);
+      render();
+    }
+
+    function petCat(id, event) {
+      if (event.pointerType === "touch" || (drag && drag.id === id)) return;
+      const cat = state.cats.find(item => item.id === id);
+      if (!cat) return;
+
+      const income = getClickIncome(cat.level);
+      state.coins += income;
+      showCoinPop(cat.x, cat.y, income);
+      updateInterface();
+    }
+
+    function startDrag(id, event) {
+      if (event.button !== undefined && event.button !== 0) return;
+      const cat = state.cats.find(item => item.id === id);
+      if (!cat) return;
+
+      event.preventDefault();
+      const element = event.currentTarget;
+      element.setPointerCapture(event.pointerId);
+      element.classList.add("dragging");
+      drag = { id, pointerId: event.pointerId, element };
+
+      element.addEventListener("pointermove", moveDrag);
+      element.addEventListener("pointerup", endDrag);
+      element.addEventListener("pointercancel", endDrag);
+    }
+
+    function moveDrag(event) {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const cat = state.cats.find(item => item.id === drag.id);
+      if (!cat) return;
+
+      const rect = scene.getBoundingClientRect();
+      const halfWidth = drag.element.offsetWidth / 2;
+      const halfHeight = drag.element.offsetHeight / 2;
+      const xPx = Math.max(halfWidth, Math.min(rect.width - halfWidth, event.clientX - rect.left));
+      const yPx = Math.max(halfHeight, Math.min(rect.height - halfHeight, event.clientY - rect.top));
+      cat.x = xPx / rect.width * 100;
+      cat.y = yPx / rect.height * 100;
+      drag.element.style.left = `${cat.x}%`;
+      drag.element.style.top = `${cat.y}%`;
+    }
+
+    function endDrag(event) {
+      if (!drag || event.pointerId !== drag.pointerId) return;
+      const draggedId = drag.id;
+      const element = drag.element;
+      element.classList.remove("dragging");
+      element.removeEventListener("pointermove", moveDrag);
+      element.removeEventListener("pointerup", endDrag);
+      element.removeEventListener("pointercancel", endDrag);
+      drag = null;
+
+      const draggedCat = state.cats.find(item => item.id === draggedId);
+      if (!draggedCat) return;
+      const mergeTarget = findMergeTarget(draggedCat, element.offsetWidth * 0.72);
+
+      if (mergeTarget && draggedCat.level < MAX_CAT_LEVEL) {
+        mergeCats(draggedCat, mergeTarget);
+      } else if (mergeTarget) {
+        showToast("Это уже максимальный уровень!");
+      }
+    }
+
+    function findMergeTarget(draggedCat, thresholdPx) {
+      const rect = scene.getBoundingClientRect();
+      let closest = null;
+      let closestDistance = Infinity;
+
+      for (const candidate of state.cats) {
+        if (candidate.id === draggedCat.id || candidate.level !== draggedCat.level) continue;
+        const dx = (candidate.x - draggedCat.x) / 100 * rect.width;
+        const dy = (candidate.y - draggedCat.y) / 100 * rect.height;
+        const distance = Math.hypot(dx, dy);
+        if (distance <= thresholdPx && distance < closestDistance) {
+          closest = candidate;
+          closestDistance = distance;
+        }
+      }
+      return closest;
+    }
+
+    function mergeCats(first, second) {
+      const position = {
+        x: (first.x + second.x) / 2,
+        y: (first.y + second.y) / 2
+      };
+      const newLevel = first.level + 1;
+
+      state.cats = state.cats.filter(cat => cat.id !== first.id && cat.id !== second.id);
+      addCat(newLevel, position);
+      showMergeBurst(position.x, position.y);
+      showToast(`Открыт мяухрустик ${newLevel} уровня!`);
+      render();
+    }
+
+    function showCoinPop(x, y, amount) {
+      const pop = document.createElement("span");
+      pop.className = "coin-pop";
+      pop.style.left = `${x}%`;
+      pop.style.top = `${y}%`;
+      pop.textContent = `+${amount}`;
+      scene.append(pop);
+      pop.addEventListener("animationend", () => pop.remove());
+    }
+
+    function showMergeBurst(x, y) {
+      const burst = document.createElement("span");
+      burst.className = "merge-burst";
+      burst.style.left = `${x}%`;
+      burst.style.top = `${y}%`;
+      scene.append(burst);
+      burst.addEventListener("animationend", () => burst.remove());
+    }
+
+    function showToast(message) {
+      clearTimeout(toastTimer);
+      toast.textContent = message;
+      toast.classList.add("show");
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 1600);
+    }
+
+    buyButton.addEventListener("click", buyCat);
+    render();
+  </script>
+</body>
+</html>
