@@ -1,550 +1,2378 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Мяухрустики</title>
-  <style>
-    :root {
-      color-scheme: light;
-      --ink: #4b3852;
-      --muted: #806f86;
-      --cream: #fffaf0;
-      --panel: rgba(255, 255, 255, .88);
-      --pink: #ff6f91;
-      --pink-dark: #dd4f75;
-      --gold: #ffbd43;
-      --shadow: 0 14px 40px rgba(92, 61, 102, .14);
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f5f1ff">
+<title>Merge Cats</title>
+<style>
+  :root {
+    --topbar-h: max(44px, 5vh);
+    --cat-size: 72px;
+    --team-slot-size: 86px;
+    --card-min-height: 72px;
+    --bg: #f5f1ff;
+    --panel: rgba(255,255,255,.94);
+    --panel-solid: #ffffff;
+    --text: #28243a;
+    --muted: #777188;
+    --primary: #7666e8;
+    --primary-dark: #5b4bcc;
+    --secondary: #ff94bd;
+    --success: #5fcf9f;
+    --danger: #ef6474;
+    --warning: #f4bf58;
+    --field-a: #e8f7f2;
+    --field-b: #f3ebff;
+    --border: rgba(72,61,112,.12);
+    --shadow: 0 14px 40px rgba(77,60,130,.14);
+    --soft-shadow: 0 7px 22px rgba(77,60,130,.11);
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+  body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    user-select: none;
+  }
+  button { font: inherit; color: inherit; }
+  button:focus-visible, .field-cat:focus-visible {
+    outline: 3px solid rgba(118,102,232,.35);
+    outline-offset: 2px;
+  }
+  .hidden { display: none !important; }
+  #app { width: 100%; height: 100dvh; overflow: hidden; }
+
+  #topBar {
+    width: 100%;
+    height: var(--topbar-h);
+    padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) 4px max(6px, env(safe-area-inset-left));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(110px, .7fr) auto;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255,255,255,.88);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 20px rgba(72,61,112,.08);
+    backdrop-filter: blur(14px);
+    position: relative;
+    z-index: 100;
+  }
+
+  .top-left, .top-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+  .top-left { overflow: hidden; }
+  .top-right { justify-content: flex-end; }
+
+  .stat-pill {
+    height: 34px;
+    padding: 0 9px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border-radius: 12px;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 3px 10px rgba(72,61,112,.07);
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .stat-icon { font-size: 16px; }
+
+  .ui-button {
+    border: 0;
+    border-radius: 12px;
+    cursor: pointer;
+    min-height: 34px;
+    padding: 0 10px;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 3px 10px rgba(72,61,112,.08);
+    font-weight: 800;
+    transition: transform .14s ease, box-shadow .14s ease, background .14s ease;
+    touch-action: manipulation;
+  }
+  .ui-button:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(72,61,112,.13); }
+  .ui-button:active { transform: translateY(1px) scale(.98); }
+
+  .icon-button { width: 36px; padding: 0; font-size: 17px; }
+
+  #buyButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #fff8d7, #fff);
+    white-space: nowrap;
+    min-width: 0;
+  }
+  #buyCatEmoji {
+    width: 26px;
+    height: 26px;
+    display: grid;
+    place-items: center;
+    font-size: 20px;
+    line-height: 1;
+    flex: 0 0 auto;
+  }
+  #buyCatEmoji .cat-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  #buyPrice { font-size: 12px; }
+
+  #clickPowerWrap {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .power-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 10px;
+    line-height: 1;
+    font-weight: 800;
+    color: var(--muted);
+  }
+  #clickMultiplier { color: var(--primary-dark); font-size: 13px; }
+
+  .power-track {
+    width: 100%;
+    height: 11px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eae6f5;
+    border: 1px solid rgba(75,61,122,.08);
+    position: relative;
+  }
+  .power-track::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(90deg,
+        transparent 19.5%, rgba(255,255,255,.75) 20%, transparent 20.5%,
+        transparent 39.5%, rgba(255,255,255,.75) 40%, transparent 40.5%,
+        transparent 59.5%, rgba(255,255,255,.75) 60%, transparent 60.5%,
+        transparent 79.5%, rgba(255,255,255,.75) 80%, transparent 80.5%);
+    pointer-events: none;
+  }
+  #clickPowerFill {
+    width: 0%;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #65d5aa, #8d7cf2, #ff95bd);
+    transition: width .12s linear;
+  }
+
+  #gameField {
+    width: 98vw;
+    height: calc(100dvh - var(--topbar-h) - 1vh);
+    margin-left: 1vw;
+    margin-right: 1vw;
+    margin-bottom: 1vh;
+    position: relative;
+    overflow: hidden;
+    border-radius: 0 0 24px 24px;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,.9), transparent 30%),
+      radial-gradient(circle at 80% 25%, rgba(255,255,255,.65), transparent 25%),
+      linear-gradient(145deg, var(--field-a), var(--field-b));
+    box-shadow: inset 0 0 0 1px rgba(76,62,118,.08), var(--soft-shadow);
+    touch-action: none;
+  }
+  #gameField::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: .24;
+    background-image: radial-gradient(circle, rgba(104,85,170,.22) 1.5px, transparent 1.5px);
+    background-size: 30px 30px;
+  }
+
+  .field-hint {
+    position: absolute;
+    left: 12px;
+    top: 10px;
+    z-index: 1;
+    color: rgba(66,58,91,.52);
+    font-size: 11px;
+    font-weight: 700;
+    pointer-events: none;
+  }
+
+  .field-cat {
+    position: absolute;
+    width: var(--cat-size);
+    height: var(--cat-size);
+    transform: translate(-50%, -50%);
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+    touch-action: none;
+    z-index: 5;
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(103,83,166,.1);
+    box-shadow: 0 8px 18px rgba(65,52,105,.14), inset 0 1px 0 rgba(255,255,255,.9);
+    transition: box-shadow .12s ease, transform .12s ease;
+  }
+  .field-cat:hover {
+    box-shadow: 0 10px 22px rgba(65,52,105,.19), inset 0 1px 0 rgba(255,255,255,.95);
+  }
+  .field-cat.dragging {
+    z-index: 50;
+    cursor: grabbing;
+    transform: translate(-50%, -50%) scale(1.08);
+    box-shadow: 0 18px 34px rgba(65,52,105,.27);
+  }
+  .field-cat.merge-ready {
+    box-shadow: 0 0 0 5px rgba(95,207,159,.25), 0 14px 28px rgba(65,52,105,.2);
+  }
+  .cat-emoji {
+    font-size: calc(var(--cat-size) * .50);
+    line-height: 1;
+    pointer-events: none;
+    filter: drop-shadow(0 3px 3px rgba(55,45,80,.12));
+  }
+  img.cat-emoji {
+    width: 82%;
+    height: 82%;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .cat-image {
+    display: block;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
+  }
+  .cat-level-badge {
+    position: absolute;
+    left: 50%;
+    bottom: -4px;
+    transform: translateX(-50%);
+    padding: 2px 6px;
+    min-width: 26px;
+    border-radius: 999px;
+    background: #fff;
+    color: var(--primary-dark);
+    border: 1px solid rgba(95,79,164,.13);
+    box-shadow: 0 3px 9px rgba(68,55,112,.12);
+    font-size: 9px;
+    font-weight: 900;
+    text-align: center;
+    pointer-events: none;
+  }
+
+  #battleButton {
+    position: absolute;
+    left: 50%;
+    bottom: max(14px, env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 70;
+    border: 0;
+    border-radius: 18px;
+    padding: 12px 27px;
+    min-width: 128px;
+    color: #fff;
+    background: linear-gradient(135deg, #7666e8, #9d72ee);
+    box-shadow: 0 9px 24px rgba(94,74,196,.32);
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform .14s ease, box-shadow .14s ease;
+  }
+  #battleButton:hover { transform: translateX(-50%) translateY(-2px); box-shadow: 0 12px 30px rgba(94,74,196,.4); }
+  #battleButton:active { transform: translateX(-50%) translateY(1px) scale(.98); }
+
+  #toastContainer {
+    position: fixed;
+    top: calc(var(--topbar-h) + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 7px;
+    pointer-events: none;
+    width: min(92vw, 420px);
+  }
+  .toast {
+    max-width: 100%;
+    padding: 9px 14px;
+    border-radius: 13px;
+    background: rgba(43,38,61,.92);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 8px 24px rgba(32,26,48,.22);
+    animation: toast-in .2s ease both, toast-out .25s ease 2.1s both;
+  }
+  .toast.success { background: rgba(52,150,111,.94); }
+  .toast.warning { background: rgba(198,128,35,.95); }
+  .toast.danger { background: rgba(196,70,88,.95); }
+
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(-10px) scale(.96); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes toast-out {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-8px); }
+  }
+
+  .float-gain {
+    position: fixed;
+    pointer-events: none;
+    z-index: 900;
+    color: #6857d8;
+    font-size: 14px;
+    font-weight: 1000;
+    text-shadow: 0 2px 6px rgba(255,255,255,.95);
+    animation: float-gain .8s ease-out both;
+  }
+  @keyframes float-gain {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(.92); }
+    to { opacity: 0; transform: translate(-50%, -145%) scale(1.08); }
+  }
+
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(34,28,51,.48);
+    backdrop-filter: blur(7px);
+  }
+  .modal-panel {
+    width: min(94vw, 720px);
+    max-height: min(90dvh, 860px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 24px;
+    background: var(--panel);
+    box-shadow: 0 24px 70px rgba(35,27,60,.3);
+    border: 1px solid rgba(255,255,255,.8);
+    animation: modal-in .18s ease both;
+  }
+  .modal-panel.small { width: min(92vw, 440px); }
+  .modal-panel.team-panel { width: min(94vw, 760px); }
+
+  @keyframes modal-in {
+    from { opacity: 0; transform: translateY(10px) scale(.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal-header {
+    flex: 0 0 auto;
+    padding: 15px 17px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-title-wrap { min-width: 0; }
+  .modal-title { margin: 0; font-size: 20px; font-weight: 950; }
+  .modal-subtitle { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+  .close-button {
+    flex: 0 0 auto;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: #f2eff9;
+    color: #665f76;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 900;
+  }
+
+  .modal-scroll {
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 15px;
+  }
+  .modal-footer {
+    flex: 0 0 auto;
+    padding: 12px 15px 15px;
+    border-top: 1px solid var(--border);
+    background: rgba(255,255,255,.82);
+  }
+
+  .primary-button, .danger-button, .secondary-button {
+    border: 0;
+    border-radius: 15px;
+    min-height: 44px;
+    padding: 10px 17px;
+    cursor: pointer;
+    font-weight: 900;
+    transition: transform .13s ease, opacity .13s ease, filter .13s ease;
+    touch-action: manipulation;
+  }
+  .primary-button {
+    color: #fff;
+    background: linear-gradient(135deg, var(--primary), #9870eb);
+    box-shadow: 0 8px 18px rgba(94,74,196,.24);
+  }
+  .secondary-button { color: #514766; background: #eeeaf7; }
+  .danger-button { color: #fff; background: linear-gradient(135deg, #e85d70, #f17b81); }
+
+  .primary-button:hover, .danger-button:hover, .secondary-button:hover { transform: translateY(-1px); }
+  .primary-button:active, .danger-button:active, .secondary-button:active { transform: translateY(1px) scale(.99); }
+  .primary-button:disabled, .secondary-button:disabled {
+    opacity: .42;
+    cursor: default;
+    box-shadow: none;
+    transform: none;
+  }
+
+  #collectionGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+    gap: 9px;
+  }
+  .collection-card {
+    min-height: 67px;
+    padding: 9px;
+    border-radius: 17px;
+    display: grid;
+    grid-template-columns: 48px minmax(0,1fr);
+    align-items: center;
+    gap: 9px;
+    background: #fff;
+    border: 1px solid var(--border);
+    box-shadow: 0 4px 13px rgba(72,61,112,.07);
+  }
+  .collection-card.locked {
+    background: #403b4b;
+    border-color: rgba(255,255,255,.07);
+    color: #fff;
+  }
+  .collection-emoji-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: #f5f2fb;
+    overflow: hidden;
+  }
+  .locked .collection-emoji-wrap { background: rgba(255,255,255,.08); }
+  .collection-emoji { font-size: 30px; line-height: 1; }
+  img.collection-emoji {
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+  }
+  .locked .collection-emoji {
+    filter: grayscale(1) brightness(0) invert(1);
+    opacity: .92;
+  }
+  .collection-name {
+    font-size: 12px;
+    line-height: 1.25;
+    font-weight: 900;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .collection-power {
+    margin-top: 3px;
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .locked .collection-power { color: rgba(255,255,255,.55); }
+
+  .settings-section { padding: 3px 0 14px; }
+  .settings-section + .settings-section {
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+  }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+  .setting-row + .setting-row { margin-top: 12px; }
+  .setting-info strong { display: block; font-size: 14px; }
+  .setting-info small { color: var(--muted); font-size: 11px; line-height: 1.3; }
+
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 28px;
+    flex: 0 0 auto;
+  }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .switch-slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: #d9d4e4;
+    transition: .2s;
+    cursor: pointer;
+  }
+  .switch-slider::before {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    left: 3px;
+    top: 3px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 7px rgba(43,37,67,.2);
+    transition: .2s;
+  }
+  .switch input:checked + .switch-slider { background: var(--primary); }
+  .switch input:checked + .switch-slider::before { transform: translateX(20px); }
+
+  #resetConfirmBox {
+    margin-top: 11px;
+    padding: 11px;
+    border-radius: 15px;
+    background: #fff0f2;
+    border: 1px solid rgba(220,75,95,.15);
+  }
+  .confirm-text {
+    color: #9b384a;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.4;
+    margin-bottom: 9px;
+  }
+  .confirm-actions { display: flex; gap: 8px; }
+  .confirm-actions button { flex: 1; }
+
+  .team-slots {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0,1fr));
+    gap: 10px;
+    padding: 15px;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(245,242,255,.75), rgba(255,255,255,.5));
+  }
+  .team-slot-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+  }
+  .team-slot {
+    width: min(var(--team-slot-size), 100%);
+    aspect-ratio: 1;
+    border-radius: 22px;
+    display: grid;
+    place-items: center;
+    position: relative;
+    background: #fff;
+    border: 2px dashed #d9d3e9;
+    box-shadow: 0 4px 12px rgba(72,61,112,.07);
+  }
+  .team-slot.filled {
+    border-style: solid;
+    border-color: rgba(118,102,232,.18);
+    background: linear-gradient(145deg, #fff, #f6f2ff);
+  }
+  .team-slot-placeholder { color: #aaa2bc; font-size: 24px; font-weight: 300; }
+  .team-slot-emoji { font-size: calc(var(--team-slot-size) * .43); }
+  img.team-slot-emoji {
+    width: 76%;
+    height: 76%;
+    object-fit: contain;
+  }
+  .team-slot-label {
+    position: absolute;
+    left: 5px;
+    right: 5px;
+    bottom: 4px;
+    text-align: center;
+    color: var(--primary-dark);
+    font-size: 9px;
+    font-weight: 900;
+  }
+  .slot-remove {
+    margin-top: 7px;
+    width: 31px;
+    height: 27px;
+    padding: 0;
+    border: 0;
+    border-radius: 9px;
+    color: #fff;
+    background: var(--danger);
+    font-size: 15px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+  .slot-remove.placeholder { visibility: hidden; }
+
+  .team-list-heading {
+    padding: 13px 15px 0;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 800;
+  }
+  #teamCatList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 9px;
+    padding: 11px 15px 15px;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .team-cat-card {
+    min-height: var(--card-min-height);
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: 17px;
+    display: grid;
+    grid-template-columns: 48px minmax(0,1fr) auto;
+    align-items: center;
+    gap: 9px;
+    background: #fff;
+    cursor: pointer;
+    box-shadow: 0 4px 13px rgba(72,61,112,.07);
+    transition: transform .13s ease, box-shadow .13s ease, opacity .13s ease;
+    text-align: left;
+  }
+  .team-cat-card:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 7px 18px rgba(72,61,112,.12);
+  }
+  .team-cat-card:disabled { opacity: .46; cursor: default; }
+  .team-card-emoji {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    background: #f5f2fb;
+    font-size: 29px;
+  }
+  img.team-card-emoji {
+    padding: 3px;
+    object-fit: contain;
+  }
+  .team-card-name { font-size: 12px; font-weight: 950; }
+  .team-card-power { margin-top: 3px; color: var(--muted); font-size: 10px; font-weight: 800; }
+  .team-card-count {
+    min-width: 32px;
+    padding: 5px 7px;
+    border-radius: 999px;
+    background: #eeeaf9;
+    color: var(--primary-dark);
+    font-size: 10px;
+    font-weight: 950;
+    text-align: center;
+  }
+  #exhibitionStartButton { width: 100%; }
+
+  #exhibitionOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    overflow: auto;
+    overscroll-behavior: contain;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(255,255,255,.95), transparent 30%),
+      linear-gradient(145deg, #ebe8ff, #eaf8f2);
+  }
+  .exhibition-shell {
+    width: min(100% - 24px, 920px);
+    margin: 0 auto;
+    min-height: 100dvh;
+    padding: max(18px, env(safe-area-inset-top)) 0 max(20px, env(safe-area-inset-bottom));
+  }
+  .exhibition-header { text-align: center; padding: 10px 8px 15px; }
+  .exhibition-kicker {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+  }
+  .exhibition-title {
+    margin: 4px 0 0;
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 1000;
+  }
+  .player-result-box {
+    margin: 0 auto 14px;
+    width: min(100%, 560px);
+    padding: 14px;
+    border-radius: 22px;
+    text-align: center;
+    background: rgba(255,255,255,.88);
+    border: 1px solid rgba(118,102,232,.13);
+    box-shadow: var(--soft-shadow);
+  }
+  #playerPlaceText { font-size: 21px; font-weight: 1000; }
+  #playerRewardText { margin-top: 3px; color: #a46b14; font-size: 14px; font-weight: 900; }
+
+  #exhibitionTeams {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(140px, 1fr));
+    gap: 9px;
+  }
+  .result-team-card {
+    position: relative;
+    min-width: 0;
+    padding: 13px 10px 11px;
+    border-radius: 20px;
+    background: rgba(255,255,255,.84);
+    border: 1px solid rgba(83,69,127,.1);
+    box-shadow: 0 5px 16px rgba(72,61,112,.08);
+    text-align: center;
+  }
+  .result-team-card.player {
+    background: linear-gradient(145deg, #fff, #f0ecff);
+    border: 2px solid rgba(118,102,232,.38);
+    box-shadow: 0 8px 24px rgba(92,75,182,.17);
+  }
+  .result-place {
+    width: 32px;
+    height: 32px;
+    margin: 0 auto 5px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #eeeaf7;
+    font-size: 13px;
+    font-weight: 1000;
+  }
+  .result-team-card:nth-child(1) .result-place { background: #fff1bd; }
+  .result-name {
+    font-size: 12px;
+    font-weight: 1000;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .result-cats {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 3px;
+    margin: 9px 0;
+    font-size: clamp(24px, 4vw, 34px);
+    letter-spacing: -4px;
+  }
+  .result-cat-image {
+    width: clamp(34px, 5vw, 48px);
+    height: clamp(34px, 5vw, 48px);
+    object-fit: contain;
+  }
+  .result-rating { color: var(--primary-dark); font-size: 11px; font-weight: 950; }
+  .result-levels { margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 800; }
+
+  .standings-panel {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 22px;
+    background: rgba(255,255,255,.85);
+    border: 1px solid rgba(83,69,127,.1);
+    box-shadow: var(--soft-shadow);
+  }
+  .standings-title { margin: 0 0 9px; font-size: 15px; font-weight: 1000; }
+  .standing-row {
+    display: grid;
+    grid-template-columns: 36px minmax(0,1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 39px;
+    padding: 6px 8px;
+    border-radius: 12px;
+  }
+  .standing-row:nth-child(odd) { background: rgba(241,237,249,.68); }
+  .standing-row.player { background: rgba(118,102,232,.1); }
+  .standing-place { font-weight: 1000; }
+  .standing-name { font-size: 12px; font-weight: 900; }
+  .standing-power { color: var(--muted); font-size: 11px; font-weight: 900; }
+
+  .exhibition-footer { margin-top: 15px; display: flex; justify-content: center; }
+  #backToGameButton { min-width: 190px; }
+
+  @media (max-width: 740px) {
+    :root { --cat-size: 64px; --team-slot-size: 74px; }
+    #topBar {
+      grid-template-columns: minmax(0,1fr) minmax(86px,.55fr) auto;
+      gap: 4px;
+      padding-left: 4px;
+      padding-right: 4px;
     }
+    .top-left, .top-right { gap: 4px; }
+    .stat-pill { padding: 0 6px; gap: 3px; font-size: 11px; }
+    .stat-icon { font-size: 14px; }
+    .ui-button { padding: 0 7px; }
+    .icon-button { width: 33px; }
+    #buyButton { gap: 3px; }
+    #buyCatEmoji { width: 23px; height: 23px; font-size: 17px; }
+    #buyPrice { font-size: 10px; }
+    .power-header span:first-child { display: none; }
+    .power-header { justify-content: flex-end; }
+    .power-track { height: 9px; }
+    .field-hint { display: none; }
+    #exhibitionTeams { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .result-team-card:first-child { grid-column: span 2; }
+  }
 
-    * { box-sizing: border-box; }
+  @media (max-width: 470px) {
+    :root { --cat-size: 59px; --team-slot-size: 68px; --card-min-height: 66px; }
+    #topBar { grid-template-columns: minmax(0,1fr) 72px auto; }
+    .stat-pill { height: 32px; border-radius: 10px; }
+    #cupsStat .stat-icon, #coinsStat .stat-icon { display: none; }
+    .ui-button { min-height: 32px; border-radius: 10px; }
+    #buyCatEmoji { width: 21px; height: 21px; font-size: 16px; }
+    #buyPrice { font-size: 9px; }
+    .icon-button { width: 31px; font-size: 15px; }
+    #collectionGrid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .collection-card { grid-template-columns: 40px minmax(0,1fr); }
+    .collection-emoji-wrap { width: 40px; height: 40px; }
+    .collection-emoji { font-size: 25px; }
+    #teamCatList { grid-template-columns: 1fr; }
+    .modal-panel { border-radius: 20px; }
+    .team-slots { gap: 5px; padding-left: 8px; padding-right: 8px; }
+    #battleButton { padding: 11px 23px; }
+  }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      overflow-x: hidden;
-      color: var(--ink);
-      font-family: ui-rounded, "Arial Rounded MT Bold", system-ui, sans-serif;
-      background:
-        radial-gradient(circle at 12% 12%, rgba(255, 218, 142, .45), transparent 28%),
-        radial-gradient(circle at 88% 18%, rgba(255, 167, 193, .33), transparent 27%),
-        linear-gradient(145deg, #fff9e9, #f8efff);
-    }
+  @media (max-height: 560px) and (orientation: landscape) {
+    :root { --topbar-h: 44px; --cat-size: 56px; }
+    #battleButton { bottom: 8px; padding-top: 8px; padding-bottom: 8px; }
+  }
 
-    button { font: inherit; }
-
-    .app {
-      width: min(1120px, calc(100% - 28px));
-      margin: 0 auto;
-      padding: 22px 0 28px;
-    }
-
-    .topbar {
-      position: relative;
-      z-index: 3;
-      display: grid;
-      grid-template-columns: minmax(180px, 1fr) auto;
-      gap: 18px;
-      align-items: center;
-      padding: 16px 18px;
-      border: 1px solid rgba(255, 255, 255, .9);
-      border-radius: 24px;
-      background: var(--panel);
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(12px);
-    }
-
-    .brand h1 {
-      margin: 0 0 4px;
-      font-size: clamp(1.35rem, 3vw, 2rem);
-      letter-spacing: -.04em;
-    }
-
-    .brand p {
-      margin: 0;
-      color: var(--muted);
-      font-size: .9rem;
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .stat {
-      min-width: 104px;
-      padding: 9px 12px;
-      border-radius: 15px;
-      background: #fff6da;
-      text-align: center;
-    }
-
-    .stat span {
-      display: block;
-      margin-bottom: 2px;
-      color: var(--muted);
-      font-size: .69rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .06em;
-    }
-
-    .stat strong { font-size: 1.05rem; }
-
-    .buy-button {
-      min-height: 52px;
-      padding: 10px 20px;
-      border: 0;
-      border-radius: 16px;
-      color: white;
-      background: linear-gradient(180deg, #ff83a0, var(--pink));
-      box-shadow: 0 6px 0 var(--pink-dark), 0 10px 20px rgba(221, 79, 117, .23);
-      cursor: pointer;
-      transition: transform .15s ease, filter .15s ease, opacity .15s ease;
-    }
-
-    .buy-button:hover:not(:disabled) { filter: brightness(1.05); transform: translateY(-1px); }
-    .buy-button:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 var(--pink-dark); }
-    .buy-button:disabled { cursor: not-allowed; filter: grayscale(.45); opacity: .55; box-shadow: none; }
-    .buy-button small { display: block; margin-top: 2px; opacity: .88; font-size: .73rem; }
-
-    .game-shell {
-      position: relative;
-      margin-top: 18px;
-      padding: 12px;
-      border-radius: 28px;
-      background: rgba(255, 255, 255, .58);
-      box-shadow: var(--shadow);
-    }
-
-    .scene {
-      position: relative;
-      height: clamp(440px, 66vh, 720px);
-      min-height: 440px;
-      overflow: hidden;
-      border: 2px solid rgba(255, 255, 255, .9);
-      border-radius: 21px;
-      background:
-        radial-gradient(circle, rgba(255,255,255,.68) 2px, transparent 2.5px) 0 0 / 28px 28px,
-        linear-gradient(180deg, #cfefff 0 62%, #d9f2c1 62% 100%);
-      box-shadow: inset 0 -20px 50px rgba(84, 151, 91, .08);
-      user-select: none;
-    }
-
-    .scene::before,
-    .scene::after {
-      content: "";
-      position: absolute;
-      bottom: -60px;
-      width: 330px;
-      height: 180px;
-      border-radius: 50%;
-      background: rgba(125, 204, 118, .2);
-      pointer-events: none;
-    }
-
-    .scene::before { left: -100px; }
-    .scene::after { right: -80px; }
-
-    .hint {
-      position: absolute;
-      z-index: 1;
-      top: 16px;
-      left: 50%;
-      width: max-content;
-      max-width: calc(100% - 28px);
-      padding: 8px 13px;
-      border-radius: 999px;
-      color: #705f77;
-      background: rgba(255,255,255,.72);
-      font-size: .78rem;
-      text-align: center;
-      transform: translateX(-50%);
-      pointer-events: none;
-    }
-
-    .cat {
-      position: absolute;
-      z-index: 2;
-      width: clamp(82px, 10vw, 104px);
-      aspect-ratio: 1;
-      padding: 0;
-      border: 3px solid transparent;
-      border-radius: 28px;
-      background: transparent;
-      cursor: grab;
-      touch-action: none;
-      filter: drop-shadow(0 8px 7px rgba(77, 58, 84, .18));
-      transform: translate(-50%, -50%);
-      transition: filter .18s ease, border-color .18s ease, background .18s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .cat:hover { filter: drop-shadow(0 10px 9px rgba(77, 58, 84, .25)); }
-    .cat:active img { transform: scale(1.06); }
-    .cat.dragging {
-      z-index: 7;
-      cursor: grabbing;
-      border-color: #fff;
-      background: rgba(255, 190, 68, .42);
-      box-shadow: 0 0 0 4px var(--gold), 0 0 24px rgba(255, 189, 67, .85);
-    }
-
-    .cat img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      pointer-events: none;
-      transition: transform .13s ease;
-    }
-
-    .level-badge {
-      position: absolute;
-      right: -5px;
-      bottom: -3px;
-      min-width: 27px;
-      height: 27px;
-      padding: 4px;
-      border: 2px solid white;
-      border-radius: 999px;
-      color: white;
-      background: #7557ba;
-      box-shadow: 0 3px 8px rgba(72, 49, 103, .25);
-      font-size: .75rem;
-      font-weight: 900;
-      line-height: 15px;
-      pointer-events: none;
-    }
-
-    .coin-pop {
-      position: absolute;
-      z-index: 10;
-      color: #a75d00;
-      font-size: 1.1rem;
-      font-weight: 950;
-      text-shadow: 0 2px 0 white, 1px 0 0 white, -1px 0 0 white;
-      transform: translate(-50%, -50%);
-      animation: float-up .85s ease-out forwards;
-      pointer-events: none;
-    }
-
-    .merge-burst {
-      position: absolute;
-      z-index: 8;
-      width: 35px;
-      height: 35px;
-      border: 8px solid rgba(255, 197, 61, .92);
-      border-radius: 50%;
-      transform: translate(-50%, -50%);
-      animation: burst .55s ease-out forwards;
-      pointer-events: none;
-    }
-
-    .toast {
-      position: fixed;
-      z-index: 20;
-      left: 50%;
-      bottom: 24px;
-      padding: 10px 16px;
-      border-radius: 999px;
-      color: white;
-      background: rgba(74, 53, 82, .92);
-      box-shadow: 0 8px 24px rgba(0,0,0,.2);
-      opacity: 0;
-      transform: translate(-50%, 16px);
-      transition: opacity .2s, transform .2s;
-      pointer-events: none;
-    }
-
-    .toast.show { opacity: 1; transform: translate(-50%, 0); }
-
-    @keyframes float-up {
-      from { opacity: 0; transform: translate(-50%, -20%) scale(.7); }
-      25% { opacity: 1; }
-      to { opacity: 0; transform: translate(-50%, -150%) scale(1.15); }
-    }
-
-    @keyframes burst {
-      from { opacity: 1; transform: translate(-50%, -50%) scale(.2); }
-      to { opacity: 0; transform: translate(-50%, -50%) scale(4); }
-    }
-
-    @media (max-width: 760px) {
-      .app { width: min(100% - 16px, 1120px); padding-top: 8px; }
-      .topbar { grid-template-columns: 1fr; padding: 14px; gap: 12px; }
-      .brand { text-align: center; }
-      .controls { justify-content: center; }
-      .stat { min-width: 92px; }
-      .buy-button { flex: 1 1 100%; }
-      .game-shell { margin-top: 10px; padding: 7px; }
-      .scene { min-height: 470px; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
-    }
-  </style>
+  body.reduce-motion *, body.reduce-motion *::before, body.reduce-motion *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+</style>
 </head>
 <body>
-  <main class="app">
-    <header class="topbar">
-      <div class="brand">
-        <h1>🐾 Мяухрустики</h1>
-        <p>Гладь, перемещай и объединяй одинаковых котиков</p>
+<div id="app">
+  <header id="topBar">
+    <div class="top-left">
+      <div class="stat-pill" id="cupsStat" title="Кубки">
+        <span class="stat-icon">🏆</span>
+        <span id="cupsValue">0</span>
       </div>
-      <div class="controls" aria-label="Игровые показатели">
-        <div class="stat"><span>Монеты</span><strong id="coins">100 🪙</strong></div>
-        <div class="stat"><span>Макс. уровень</span><strong id="maxLevel">1</strong></div>
-        <div class="stat"><span>Покупка</span><strong id="buyLevel">Ур. 1</strong></div>
-        <button class="buy-button" id="buyButton" type="button">
-          Купить мяухрустика
-          <small id="buyCost">10 монет · уровень 1</small>
-        </button>
+      <div class="stat-pill" id="coinsStat" title="Монеты">
+        <span class="stat-icon">🪙</span>
+        <span id="coinsValue">0</span>
       </div>
+      <button class="ui-button" id="buyButton" type="button" aria-label="Купить котика">
+        <span id="buyCatEmoji">🐱</span>
+        <span id="buyPrice">0 🪙</span>
+      </button>
+    </div>
+
+    <div id="clickPowerWrap">
+      <div class="power-header">
+        <span>Сила клика</span>
+        <span id="clickMultiplier">x1</span>
+      </div>
+      <div class="power-track">
+        <div id="clickPowerFill"></div>
+      </div>
+    </div>
+
+    <div class="top-right">
+      <button class="ui-button icon-button" id="collectionButton" type="button" title="Коллекция" aria-label="Коллекция">📚</button>
+      <button class="ui-button icon-button" id="settingsButton" type="button" title="Настройки" aria-label="Настройки">⚙️</button>
+    </div>
+  </header>
+
+  <main id="gameField">
+    <div class="field-hint">Клик — монеты · Перетаскивай одинаковых котов друг на друга</div>
+    <button id="battleButton" type="button">🏆 В бой</button>
+  </main>
+</div>
+
+<div id="toastContainer" aria-live="polite"></div>
+
+<div class="modal-backdrop hidden" id="collectionModal">
+  <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="collectionTitle">
+    <header class="modal-header">
+      <div class="modal-title-wrap">
+        <h2 class="modal-title" id="collectionTitle">Коллекция котиков</h2>
+        <p class="modal-subtitle" id="collectionProgress">Открыто 0 / 150</p>
+      </div>
+      <button class="close-button" type="button" data-close-modal="collectionModal" aria-label="Закрыть">✕</button>
+    </header>
+    <div class="modal-scroll">
+      <div id="collectionGrid"></div>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop hidden" id="settingsModal">
+  <section class="modal-panel small" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <header class="modal-header">
+      <div class="modal-title-wrap">
+        <h2 class="modal-title" id="settingsTitle">Настройки</h2>
+        <p class="modal-subtitle">Прогресс сохраняется автоматически</p>
+      </div>
+      <button class="close-button" type="button" data-close-modal="settingsModal" aria-label="Закрыть">✕</button>
     </header>
 
-    <section class="game-shell" aria-label="Игровое поле">
-      <div class="scene" id="scene">
-        <div class="hint">Погладь котика курсором · перетащи к такому же для слияния</div>
+    <div class="modal-scroll">
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-info">
+            <strong>Уменьшить анимации</strong>
+            <small>Полезно на слабых устройствах</small>
+          </div>
+          <label class="switch">
+            <input id="reduceMotionToggle" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
       </div>
+
+      <div class="settings-section">
+        <div class="setting-row">
+          <div class="setting-info">
+            <strong>Сброс прогресса</strong>
+            <small>Удалит котиков, монеты, кубки и коллекцию</small>
+          </div>
+          <button class="danger-button" id="resetProgressButton" type="button">Сбросить</button>
+        </div>
+
+        <div class="hidden" id="resetConfirmBox">
+          <div class="confirm-text">Точно удалить весь прогресс? Это действие нельзя отменить.</div>
+          <div class="confirm-actions">
+            <button class="secondary-button" id="cancelResetButton" type="button">Отмена</button>
+            <button class="danger-button" id="confirmResetButton" type="button">Да, удалить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal-backdrop hidden" id="teamModal">
+  <section class="modal-panel team-panel" role="dialog" aria-modal="true" aria-labelledby="teamTitle">
+    <header class="modal-header">
+      <div class="modal-title-wrap">
+        <h2 class="modal-title" id="teamTitle">Команда для выставки</h2>
+        <p class="modal-subtitle">Выбери ровно 3 котиков с игрового поля</p>
+      </div>
+      <button class="close-button" type="button" data-close-modal="teamModal" aria-label="Закрыть">✕</button>
+    </header>
+
+    <div class="team-slots" id="teamSlots"></div>
+    <div class="team-list-heading">Котики на поле</div>
+    <div id="teamCatList"></div>
+
+    <footer class="modal-footer">
+      <button class="primary-button" id="exhibitionStartButton" type="button" disabled>На выставку</button>
+    </footer>
+  </section>
+</div>
+
+<div id="exhibitionOverlay" class="hidden">
+  <div class="exhibition-shell">
+    <header class="exhibition-header">
+      <div class="exhibition-kicker">Cat Show</div>
+      <h1 class="exhibition-title">🏆 Выставка котиков</h1>
+    </header>
+
+    <section class="player-result-box">
+      <div id="playerPlaceText">Ваше место: —</div>
+      <div id="playerRewardText">Награда: —</div>
     </section>
-  </main>
-  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
-  <script>
-    "use strict";
+    <section id="exhibitionTeams"></section>
 
-    const MAX_CAT_LEVEL = 5;
-    const STARTING_COINS = 100;
-    const CAT_MARGIN_PERCENT = 8;
+    <section class="standings-panel">
+      <h2 class="standings-title">Итоговая таблица</h2>
+      <div id="standingsList"></div>
+    </section>
 
-    const state = {
-      coins: STARTING_COINS,
-      maxLevel: 1,
-      nextId: 1,
-      cats: [] // { id, level, x, y }, where x/y are percentages of the scene.
-    };
+    <div class="exhibition-footer">
+      <button class="primary-button" id="backToGameButton" type="button">Вернуться на поле</button>
+    </div>
+  </div>
+</div>
 
-    const scene = document.getElementById("scene");
-    const coinsEl = document.getElementById("coins");
-    const maxLevelEl = document.getElementById("maxLevel");
-    const buyLevelEl = document.getElementById("buyLevel");
-    const buyCostEl = document.getElementById("buyCost");
-    const buyButton = document.getElementById("buyButton");
-    const toast = document.getElementById("toast");
-    let toastTimer;
-    let drag = null;
+<script>
+"use strict";
 
-    function getBuyLevel() {
-      return Math.max(1, state.maxLevel - 4);
+const CONFIG = {
+  SAVE_KEY: "mergeCatsPrototype_v1",
+  SAVE_VERSION: 1,
+  MAX_LEVEL: 150,
+  CAT_IMAGE_LEVELS: 145,
+
+  START: {
+    COINS: 220,
+    CUPS: 0,
+    HIGHEST_UNLOCKED_LEVEL: 1,
+    STARTING_CATS: [
+      { level: 1, x: 0.42, y: 0.42 },
+      { level: 1, x: 0.58, y: 0.42 }
+    ]
+  },
+
+  CLICK_BAR: {
+    MIN: 0,
+    MAX: 100,
+    GAIN_PER_CLICK: 8,
+    DECAY_DELAY_MS: 1350,
+    DECAY_PER_SECOND: 8,
+    THRESHOLDS: [
+      { min: 0, multiplier: 1 },
+      { min: 20, multiplier: 2 },
+      { min: 40, multiplier: 3 },
+      { min: 60, multiplier: 4 },
+      { min: 80, multiplier: 5 }
+    ]
+  },
+
+  POWER: {
+    BASE: 10,
+    GROWTH: 1.16,
+    LINEAR_BONUS_PER_LEVEL: 1.2
+  },
+
+  BUY_PRICE: {
+    BASE: 45,
+    GROWTH: 1.19,
+    LINEAR_BONUS_PER_LEVEL: 4
+  },
+
+  CLICK_COINS: {
+    BASE: 1,
+    GROWTH: 1.14,
+    LINEAR_BONUS_PER_LEVEL: 0.18
+  },
+
+  BUY: {
+    LEVEL_BEHIND_HIGHEST: 5,
+    RANDOM_X_MIN: 0.08,
+    RANDOM_X_MAX: 0.92,
+    RANDOM_Y_MIN: 0.10,
+    RANDOM_Y_MAX: 0.82
+  },
+
+  MERGE: {
+    DROP_RADIUS_PX: 64,
+    MAX_LEVEL_BEHAVIOR: "block"
+  },
+
+  BATTLE: {
+    TEAM_SIZE: 3,
+    OPPONENT_COUNT: 4,
+    COMFORT_CUPS_BASE: 18,
+    COMFORT_CUPS_PER_LEVEL: 3.5,
+    COMFORT_CUPS_LEVEL_POWER: 1.35,
+    PRESSURE_SCALE: 1.12,
+    PRESSURE_MAX: 1.65,
+    PLAYER_TEAM_INFLUENCE: 0.48,
+    MAX_OPPONENT_LEVEL_BONUS_AT_FULL_PRESSURE: 3.0,
+    PLAYER_HIDDEN_LEVEL_ADVANTAGE: 1.0,
+    NEWBIE_ASSIST_UNTIL_LEVEL: 14,
+    NEWBIE_ASSIST_MAX_LEVEL_REDUCTION: 1.8,
+    LOSS_ASSIST_LEVEL_PER_STREAK: 0.48,
+    LOSS_ASSIST_MAX_LEVEL_REDUCTION: 2.4,
+    PRESSURE_PROFILES: [
+      { pressure: 0.00, offsets: [-3.1, -2.1, -1.15, -0.25] },
+      { pressure: 0.65, offsets: [-2.55, -1.45, -0.45, 0.45] },
+      { pressure: 0.90, offsets: [-2.05, -0.95, 0.10, 0.95] },
+      { pressure: 1.10, offsets: [-1.35, -0.25, 0.75, 1.55] },
+      { pressure: 1.30, offsets: [-0.75, 0.20, 1.15, 2.00] },
+      { pressure: 1.65, offsets: [-0.15, 0.75, 1.65, 2.55] }
+    ],
+    CAT_LEVEL_JITTER: [-1, 0, 0, 0, 1],
+    TEAM_CENTER_RANDOM_JITTER: 0.42
+  },
+
+  CUP_REWARDS: {
+    BASE: 4.7,
+    PER_LEVEL: 0.30,
+    PLACE_RANGES: {
+      1: [0.90, 1.20],
+      2: [0.55, 0.78],
+      3: [0.25, 0.45],
+      4: [0.00, 0.08],
+      5: [0.00, 0.025]
     }
+  },
 
-    function getBuyCost(level = getBuyLevel()) {
-      return 10 * level;
+  HISTORY: { MAX_RESULTS: 20 },
+
+  ANIMATION: {
+    TOAST_MS: 2400,
+    COIN_FLOAT_MS: 800,
+    MERGE_PULSE_MS: 260
+  },
+
+  UI: {
+    CAT_SIZE_PX: 72,
+    TEAM_SLOT_SIZE_PX: 86,
+    CARD_MIN_HEIGHT_PX: 72
+  },
+
+  DRAG: { START_DISTANCE_PX: 6 },
+
+  FORMULAS: {
+    power(level) {
+      const l = Math.max(1, Math.min(CONFIG.MAX_LEVEL, level));
+      const exponential = CONFIG.POWER.BASE * Math.pow(CONFIG.POWER.GROWTH, l - 1);
+      const linear = CONFIG.POWER.LINEAR_BONUS_PER_LEVEL * (l - 1);
+      return Math.max(1, Math.round(exponential + linear));
+    },
+
+    buyPrice(level) {
+      const l = Math.max(1, Math.min(CONFIG.MAX_LEVEL, level));
+      const exponential = CONFIG.BUY_PRICE.BASE * Math.pow(CONFIG.BUY_PRICE.GROWTH, l - 1);
+      const linear = CONFIG.BUY_PRICE.LINEAR_BONUS_PER_LEVEL * l;
+      return Math.max(1, Math.round(exponential + linear));
+    },
+
+    clickCoin(level) {
+      const l = Math.max(1, Math.min(CONFIG.MAX_LEVEL, level));
+      const exponential = CONFIG.CLICK_COINS.BASE * Math.pow(CONFIG.CLICK_COINS.GROWTH, l - 1);
+      const linear = CONFIG.CLICK_COINS.LINEAR_BONUS_PER_LEVEL * (l - 1);
+      return Math.max(1, Math.round(exponential + linear));
+    },
+
+    comfortCups(level) {
+      const l = Math.max(1, level);
+      return Math.round(
+        CONFIG.BATTLE.COMFORT_CUPS_BASE +
+        CONFIG.BATTLE.COMFORT_CUPS_PER_LEVEL *
+        Math.pow(l, CONFIG.BATTLE.COMFORT_CUPS_LEVEL_POWER)
+      );
+    },
+
+    cupRewardBase(level) {
+      return CONFIG.CUP_REWARDS.BASE + CONFIG.CUP_REWARDS.PER_LEVEL * Math.max(1, level);
     }
+  }
+};
 
-    function getClickIncome(level) {
-      return level * 2;
+const CAT_FACES = ["🐱","😺","😸","😹","😻","😼","😽","🙀","😿","😾","🐈","🐈‍⬛"];
+const CAT_AURAS = ["","✨","⭐","🌟","💫","👑","🔥","⚡","💎","🌈"];
+
+function buildCatEmoji(level) {
+  const face = CAT_FACES[(level - 1) % CAT_FACES.length];
+  const tier = Math.min(CAT_AURAS.length - 1, Math.floor((level - 1) / 15));
+  return face + CAT_AURAS[tier];
+}
+
+const CATS = Array.from({ length: CONFIG.MAX_LEVEL }, (_, index) => {
+  const level = index + 1;
+  return {
+    id: level,
+    emoji: buildCatEmoji(level),
+    image: level <= CONFIG.CAT_IMAGE_LEVELS
+      ? `res/cats/${String(level).padStart(3, "0")}.webp`
+      : null,
+    name: `Cat ${String(level).padStart(3, "0")}`,
+    power: CONFIG.FORMULAS.power(level)
+  };
+});
+
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+function randomBetween(min, max) { return min + Math.random() * (max - min); }
+function randomItem(array) { return array[Math.floor(Math.random() * array.length)]; }
+function lerp(a, b, t) { return a + (b - a) * t; }
+
+function uid() {
+  if (globalThis.crypto && typeof globalThis.crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "cat_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2);
+}
+
+function formatNumber(value) {
+  if (!Number.isFinite(value)) return "0";
+  const sign = value < 0 ? "-" : "";
+  let number = Math.abs(value);
+  const units = [
+    { value: 1e18, suffix: "Qi" },
+    { value: 1e15, suffix: "Qa" },
+    { value: 1e12, suffix: "T" },
+    { value: 1e9, suffix: "B" },
+    { value: 1e6, suffix: "M" },
+    { value: 1e3, suffix: "K" }
+  ];
+
+  for (const unit of units) {
+    if (number >= unit.value) {
+      const scaled = number / unit.value;
+      const decimals = scaled >= 100 ? 0 : 1;
+      return sign + scaled.toFixed(decimals).replace(/\.0$/, "") + unit.suffix;
     }
+  }
 
-    function randomPosition() {
-      const span = 100 - CAT_MARGIN_PERCENT * 2;
-      return {
-        x: CAT_MARGIN_PERCENT + Math.random() * span,
-        y: 16 + Math.random() * 76
-      };
-    }
+  return sign + Math.floor(number).toLocaleString("ru-RU");
+}
 
-    function addCat(level, position = randomPosition()) {
-      const cat = {
-        id: state.nextId++,
-        level: Math.min(level, MAX_CAT_LEVEL),
-        x: Math.max(CAT_MARGIN_PERCENT, Math.min(100 - CAT_MARGIN_PERCENT, position.x)),
-        y: Math.max(13, Math.min(92, position.y))
-      };
-      state.cats.push(cat);
-      state.maxLevel = Math.max(state.maxLevel, cat.level);
-      return cat;
-    }
+function getCatData(level) {
+  return CATS[clamp(Math.round(level), 1, CONFIG.MAX_LEVEL) - 1];
+}
 
-    function render() {
-      scene.querySelectorAll(".cat").forEach(element => element.remove());
+function catVisualHTML(levelOrCat, className) {
+  const cat = typeof levelOrCat === "number"
+    ? getCatData(levelOrCat)
+    : levelOrCat;
 
-      for (const cat of state.cats) {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "cat";
-        button.style.left = `${cat.x}%`;
-        button.style.top = `${cat.y}%`;
-        button.dataset.id = cat.id;
-        button.setAttribute("aria-label", `Мяухрустик, уровень ${cat.level}`);
+  if (cat.image) {
+    return `<img class="${className} cat-image" src="${cat.image}" alt="${cat.name}" draggable="false">`;
+  }
 
-        const image = document.createElement("img");
-        image.src = `res/cats/${cat.level}.webp`;
-        image.alt = "";
-        image.draggable = false;
+  return `<span class="${className}">${cat.emoji}</span>`;
+}
 
-        const badge = document.createElement("span");
-        badge.className = "level-badge";
-        badge.textContent = cat.level;
+function getBuyLevel() {
+  return clamp(
+    state.highestUnlockedLevel - CONFIG.BUY.LEVEL_BEHIND_HIGHEST,
+    1,
+    CONFIG.MAX_LEVEL
+  );
+}
 
-        button.append(image, badge);
-        button.addEventListener("pointerenter", event => petCat(cat.id, event));
-        button.addEventListener("pointerdown", event => startDrag(cat.id, event));
-        scene.append(button);
-      }
+function currentMultiplier() {
+  let multiplier = 1;
+  for (const threshold of CONFIG.CLICK_BAR.THRESHOLDS) {
+    if (state.clickBar >= threshold.min) multiplier = threshold.multiplier;
+  }
+  return multiplier;
+}
 
-      updateInterface();
-    }
+function getOpenedSet() { return new Set(state.openedLevels); }
 
-    function updateInterface() {
-      const buyLevel = getBuyLevel();
-      const cost = getBuyCost(buyLevel);
-      coinsEl.textContent = `${state.coins} 🪙`;
-      maxLevelEl.textContent = state.maxLevel;
-      buyLevelEl.textContent = `Ур. ${buyLevel}`;
-      buyCostEl.textContent = `${cost} монет · уровень ${buyLevel}`;
-      buyButton.disabled = state.coins < cost;
-    }
+function openLevel(level) {
+  const safeLevel = clamp(level, 1, CONFIG.MAX_LEVEL);
+  if (!state.openedLevels.includes(safeLevel)) {
+    state.openedLevels.push(safeLevel);
+    state.openedLevels.sort((a, b) => a - b);
+    return true;
+  }
+  return false;
+}
 
-    function buyCat() {
-      const level = getBuyLevel();
-      const cost = getBuyCost(level);
-      if (state.coins < cost) return;
+function applyConfigToCSS() {
+  document.documentElement.style.setProperty("--cat-size", CONFIG.UI.CAT_SIZE_PX + "px");
+  document.documentElement.style.setProperty("--team-slot-size", CONFIG.UI.TEAM_SLOT_SIZE_PX + "px");
+  document.documentElement.style.setProperty("--card-min-height", CONFIG.UI.CARD_MIN_HEIGHT_PX + "px");
+}
 
-      state.coins -= cost;
-      addCat(level);
-      render();
-    }
+function createDefaultState() {
+  return {
+    version: CONFIG.SAVE_VERSION,
+    coins: CONFIG.START.COINS,
+    cups: CONFIG.START.CUPS,
+    highestUnlockedLevel: CONFIG.START.HIGHEST_UNLOCKED_LEVEL,
+    openedLevels: [1],
+    cats: CONFIG.START.STARTING_CATS.map(item => ({
+      uid: uid(),
+      level: item.level,
+      x: item.x,
+      y: item.y
+    })),
+    clickBar: 0,
+    lastClickAt: 0,
+    lossStreak: 0,
+    resultHistory: [],
+    settings: { reduceMotion: false }
+  };
+}
 
-    function petCat(id, event) {
-      if (event.pointerType === "touch" || (drag && drag.id === id)) return;
-      const cat = state.cats.find(item => item.id === id);
-      if (!cat) return;
+function sanitizeState(raw) {
+  const fallback = createDefaultState();
+  if (!raw || typeof raw !== "object") return fallback;
 
-      const income = getClickIncome(cat.level);
-      state.coins += income;
-      showCoinPop(cat.x, cat.y, income);
-      updateInterface();
-    }
+  const sanitized = {
+    version: CONFIG.SAVE_VERSION,
+    coins: Number.isFinite(raw.coins) ? Math.max(0, raw.coins) : fallback.coins,
+    cups: Number.isFinite(raw.cups) ? Math.max(0, raw.cups) : fallback.cups,
+    highestUnlockedLevel: clamp(Number(raw.highestUnlockedLevel) || 1, 1, CONFIG.MAX_LEVEL),
+    openedLevels: Array.isArray(raw.openedLevels)
+      ? raw.openedLevels.map(Number).filter(level => Number.isFinite(level) && level >= 1 && level <= CONFIG.MAX_LEVEL)
+      : [1],
+    cats: Array.isArray(raw.cats)
+      ? raw.cats.filter(cat => cat && typeof cat === "object").map(cat => ({
+          uid: String(cat.uid || uid()),
+          level: clamp(Number(cat.level) || 1, 1, CONFIG.MAX_LEVEL),
+          x: clamp(Number(cat.x) || .5, .02, .98),
+          y: clamp(Number(cat.y) || .5, .02, .98)
+        }))
+      : fallback.cats,
+    clickBar: clamp(Number(raw.clickBar) || 0, CONFIG.CLICK_BAR.MIN, CONFIG.CLICK_BAR.MAX),
+    lastClickAt: Number.isFinite(raw.lastClickAt) ? raw.lastClickAt : 0,
+    lossStreak: Math.max(0, Math.floor(Number(raw.lossStreak) || 0)),
+    resultHistory: Array.isArray(raw.resultHistory) ? raw.resultHistory.slice(-CONFIG.HISTORY.MAX_RESULTS) : [],
+    settings: { reduceMotion: Boolean(raw.settings && raw.settings.reduceMotion) }
+  };
 
-    function startDrag(id, event) {
-      if (event.button !== undefined && event.button !== 0) return;
-      const cat = state.cats.find(item => item.id === id);
-      if (!cat) return;
+  if (!sanitized.openedLevels.includes(1)) sanitized.openedLevels.unshift(1);
+  sanitized.openedLevels = [...new Set(sanitized.openedLevels)].sort((a, b) => a - b);
+  sanitized.highestUnlockedLevel = Math.max(sanitized.highestUnlockedLevel, ...sanitized.openedLevels);
+  return sanitized;
+}
 
+function loadState() {
+  try {
+    const stored = localStorage.getItem(CONFIG.SAVE_KEY);
+    if (!stored) return createDefaultState();
+    return sanitizeState(JSON.parse(stored));
+  } catch (error) {
+    console.warn("Failed to load save:", error);
+    return createDefaultState();
+  }
+}
+
+let state = loadState();
+let saveTimer = null;
+
+function saveStateImmediately() {
+  try {
+    localStorage.setItem(CONFIG.SAVE_KEY, JSON.stringify(state));
+  } catch (error) {
+    console.warn("Failed to save game:", error);
+  }
+}
+
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveStateImmediately, 180);
+}
+
+function applyOfflineClickDecay() {
+  if (!state.lastClickAt || state.clickBar <= 0) return;
+  const elapsed = Date.now() - state.lastClickAt - CONFIG.CLICK_BAR.DECAY_DELAY_MS;
+  if (elapsed <= 0) return;
+  const lost = CONFIG.CLICK_BAR.DECAY_PER_SECOND * (elapsed / 1000);
+  state.clickBar = clamp(
+    state.clickBar - lost,
+    CONFIG.CLICK_BAR.MIN,
+    CONFIG.CLICK_BAR.MAX
+  );
+}
+
+const gameField = $("#gameField");
+const coinsValue = $("#coinsValue");
+const cupsValue = $("#cupsValue");
+const buyButton = $("#buyButton");
+const buyCatEmoji = $("#buyCatEmoji");
+const buyPrice = $("#buyPrice");
+const clickPowerFill = $("#clickPowerFill");
+const clickMultiplier = $("#clickMultiplier");
+const collectionButton = $("#collectionButton");
+const settingsButton = $("#settingsButton");
+const battleButton = $("#battleButton");
+const collectionModal = $("#collectionModal");
+const collectionGrid = $("#collectionGrid");
+const collectionProgress = $("#collectionProgress");
+const settingsModal = $("#settingsModal");
+const reduceMotionToggle = $("#reduceMotionToggle");
+const resetProgressButton = $("#resetProgressButton");
+const resetConfirmBox = $("#resetConfirmBox");
+const cancelResetButton = $("#cancelResetButton");
+const confirmResetButton = $("#confirmResetButton");
+const teamModal = $("#teamModal");
+const teamSlots = $("#teamSlots");
+const teamCatList = $("#teamCatList");
+const exhibitionStartButton = $("#exhibitionStartButton");
+const exhibitionOverlay = $("#exhibitionOverlay");
+const exhibitionTeams = $("#exhibitionTeams");
+const standingsList = $("#standingsList");
+const playerPlaceText = $("#playerPlaceText");
+const playerRewardText = $("#playerRewardText");
+const backToGameButton = $("#backToGameButton");
+const toastContainer = $("#toastContainer");
+
+function showToast(message, type = "") {
+  const toast = document.createElement("div");
+  toast.className = "toast" + (type ? ` ${type}` : "");
+  toast.textContent = message;
+  toastContainer.appendChild(toast);
+  window.setTimeout(() => toast.remove(), CONFIG.ANIMATION.TOAST_MS);
+}
+
+function showFloatingGain(clientX, clientY, text) {
+  const element = document.createElement("div");
+  element.className = "float-gain";
+  element.textContent = text;
+  element.style.left = clientX + "px";
+  element.style.top = clientY + "px";
+  document.body.appendChild(element);
+  window.setTimeout(() => element.remove(), CONFIG.ANIMATION.COIN_FLOAT_MS);
+}
+
+function renderStats() {
+  coinsValue.textContent = formatNumber(state.coins);
+  cupsValue.textContent = formatNumber(state.cups);
+}
+
+function renderBuyButton() {
+  const level = getBuyLevel();
+  const cat = getCatData(level);
+  const price = CONFIG.FORMULAS.buyPrice(level);
+  buyCatEmoji.innerHTML = catVisualHTML(cat, "buy-cat-image");
+  buyPrice.textContent = `${formatNumber(price)} 🪙`;
+  buyButton.title = `Купить ${cat.name}, уровень ${level}`;
+}
+
+function renderClickBar() {
+  const percentage = clamp(state.clickBar, CONFIG.CLICK_BAR.MIN, CONFIG.CLICK_BAR.MAX);
+  clickPowerFill.style.width = percentage + "%";
+  clickMultiplier.textContent = `x${currentMultiplier()}`;
+}
+
+function applySettings() {
+  document.body.classList.toggle("reduce-motion", state.settings.reduceMotion);
+  reduceMotionToggle.checked = state.settings.reduceMotion;
+}
+
+function renderMainUI() {
+  renderStats();
+  renderBuyButton();
+  renderClickBar();
+  applySettings();
+}
+
+function getCatInstance(uidValue) {
+  return state.cats.find(cat => cat.uid === uidValue);
+}
+
+function createCatElement(instance) {
+  const data = getCatData(instance.level);
+  const element = document.createElement("div");
+  element.className = "field-cat";
+  element.dataset.uid = instance.uid;
+  element.style.left = (instance.x * 100) + "%";
+  element.style.top = (instance.y * 100) + "%";
+  element.tabIndex = 0;
+  element.setAttribute("role", "button");
+  element.setAttribute(
+    "aria-label",
+    `${data.name}, уровень ${instance.level}, сила ${formatNumber(data.power)}`
+  );
+
+  element.innerHTML = `
+    ${catVisualHTML(data, "cat-emoji")}
+    <span class="cat-level-badge">Lv.${instance.level}</span>
+  `;
+
+  element.addEventListener("pointerdown", onCatPointerDown);
+  element.addEventListener("keydown", event => {
+    if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
-      const element = event.currentTarget;
-      element.setPointerCapture(event.pointerId);
-      element.classList.add("dragging");
-      drag = { id, pointerId: event.pointerId, element };
+      const rect = element.getBoundingClientRect();
+      handleCatClick(
+        instance.uid,
+        rect.left + rect.width / 2,
+        rect.top + rect.height / 2
+      );
+    }
+  });
 
-      element.addEventListener("pointermove", moveDrag);
-      element.addEventListener("pointerup", endDrag);
-      element.addEventListener("pointercancel", endDrag);
+  return element;
+}
+
+function renderCats() {
+  $$(".field-cat", gameField).forEach(element => element.remove());
+  const fragment = document.createDocumentFragment();
+  for (const cat of state.cats) fragment.appendChild(createCatElement(cat));
+  gameField.appendChild(fragment);
+}
+
+function handleCatClick(catUid, clientX, clientY) {
+  const instance = getCatInstance(catUid);
+  if (!instance) return;
+
+  state.clickBar = clamp(
+    state.clickBar + CONFIG.CLICK_BAR.GAIN_PER_CLICK,
+    CONFIG.CLICK_BAR.MIN,
+    CONFIG.CLICK_BAR.MAX
+  );
+  state.lastClickAt = Date.now();
+
+  const multiplier = currentMultiplier();
+  const base = CONFIG.FORMULAS.clickCoin(instance.level);
+  const earned = base * multiplier;
+
+  state.coins += earned;
+  renderStats();
+  renderClickBar();
+  showFloatingGain(clientX, clientY, `+${formatNumber(earned)} 🪙`);
+  scheduleSave();
+}
+
+let activeDrag = null;
+
+function onCatPointerDown(event) {
+  if (event.button !== undefined && event.button !== 0) return;
+
+  const element = event.currentTarget;
+  const catUid = element.dataset.uid;
+  const instance = getCatInstance(catUid);
+  if (!instance) return;
+
+  const elementRect = element.getBoundingClientRect();
+
+  activeDrag = {
+    uid: catUid,
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    originalX: instance.x,
+    originalY: instance.y,
+    centerOffsetX: elementRect.left + elementRect.width / 2 - event.clientX,
+    centerOffsetY: elementRect.top + elementRect.height / 2 - event.clientY,
+    element,
+    dragging: false,
+    candidateUid: null
+  };
+
+  try { element.setPointerCapture(event.pointerId); } catch (_) {}
+  element.addEventListener("pointermove", onCatPointerMove);
+  element.addEventListener("pointerup", onCatPointerUp);
+  element.addEventListener("pointercancel", onCatPointerCancel);
+}
+
+function onCatPointerMove(event) {
+  if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
+
+  const dx = event.clientX - activeDrag.startX;
+  const dy = event.clientY - activeDrag.startY;
+  const distance = Math.hypot(dx, dy);
+
+  if (!activeDrag.dragging && distance < CONFIG.DRAG.START_DISTANCE_PX) return;
+
+  if (!activeDrag.dragging) {
+    activeDrag.dragging = true;
+    activeDrag.element.classList.add("dragging");
+  }
+
+  event.preventDefault();
+
+  const fieldRect = gameField.getBoundingClientRect();
+  const catSize = activeDrag.element.getBoundingClientRect().width;
+  const half = catSize / 2;
+
+  let centerX = event.clientX + activeDrag.centerOffsetX - fieldRect.left;
+  let centerY = event.clientY + activeDrag.centerOffsetY - fieldRect.top;
+
+  centerX = clamp(centerX, half, fieldRect.width - half);
+  centerY = clamp(centerY, half, fieldRect.height - half);
+
+  const instance = getCatInstance(activeDrag.uid);
+  if (!instance) return;
+
+  instance.x = centerX / fieldRect.width;
+  instance.y = centerY / fieldRect.height;
+
+  activeDrag.element.style.left = (instance.x * 100) + "%";
+  activeDrag.element.style.top = (instance.y * 100) + "%";
+
+  updateMergeCandidate();
+}
+
+function updateMergeCandidate() {
+  $$(".field-cat.merge-ready", gameField).forEach(el => el.classList.remove("merge-ready"));
+  if (!activeDrag || !activeDrag.dragging) return;
+
+  const target = findMergeTarget(activeDrag.uid);
+  activeDrag.candidateUid = target ? target.uid : null;
+
+  if (target) {
+    const targetElement = document.querySelector(`.field-cat[data-uid="${target.uid}"]`);
+    if (targetElement) targetElement.classList.add("merge-ready");
+  }
+}
+
+function findMergeTarget(sourceUid) {
+  const source = getCatInstance(sourceUid);
+  if (!source) return null;
+
+  const fieldRect = gameField.getBoundingClientRect();
+  let best = null;
+  let bestDistance = Infinity;
+
+  for (const candidate of state.cats) {
+    if (candidate.uid === sourceUid) continue;
+    if (candidate.level !== source.level) continue;
+
+    const distance = Math.hypot(
+      source.x * fieldRect.width - candidate.x * fieldRect.width,
+      source.y * fieldRect.height - candidate.y * fieldRect.height
+    );
+
+    if (distance <= CONFIG.MERGE.DROP_RADIUS_PX && distance < bestDistance) {
+      bestDistance = distance;
+      best = candidate;
+    }
+  }
+
+  return best;
+}
+
+function onCatPointerUp(event) {
+  if (!activeDrag || event.pointerId !== activeDrag.pointerId) return;
+
+  const drag = activeDrag;
+  const source = getCatInstance(drag.uid);
+  cleanupDragListeners(drag.element);
+
+  if (!source) {
+    activeDrag = null;
+    return;
+  }
+
+  if (!drag.dragging) {
+    handleCatClick(drag.uid, event.clientX, event.clientY);
+    activeDrag = null;
+    return;
+  }
+
+  const target = drag.candidateUid
+    ? getCatInstance(drag.candidateUid)
+    : findMergeTarget(drag.uid);
+
+  activeDrag = null;
+
+  if (target && target.level === source.level) {
+    if (source.level >= CONFIG.MAX_LEVEL && CONFIG.MERGE.MAX_LEVEL_BEHAVIOR === "block") {
+      renderCats();
+      showToast("Уровень 150 — это максимум 👑", "warning");
+      scheduleSave();
+      return;
     }
 
-    function moveDrag(event) {
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      const cat = state.cats.find(item => item.id === drag.id);
-      if (!cat) return;
+    mergeCats(source.uid, target.uid);
+    return;
+  }
 
-      const rect = scene.getBoundingClientRect();
-      const halfWidth = drag.element.offsetWidth / 2;
-      const halfHeight = drag.element.offsetHeight / 2;
-      const xPx = Math.max(halfWidth, Math.min(rect.width - halfWidth, event.clientX - rect.left));
-      const yPx = Math.max(halfHeight, Math.min(rect.height - halfHeight, event.clientY - rect.top));
-      cat.x = xPx / rect.width * 100;
-      cat.y = yPx / rect.height * 100;
-      drag.element.style.left = `${cat.x}%`;
-      drag.element.style.top = `${cat.y}%`;
+  renderCats();
+  scheduleSave();
+}
+
+function onCatPointerCancel() {
+  if (!activeDrag) return;
+
+  const source = getCatInstance(activeDrag.uid);
+  if (source) {
+    source.x = activeDrag.originalX;
+    source.y = activeDrag.originalY;
+  }
+
+  cleanupDragListeners(activeDrag.element);
+  activeDrag = null;
+  renderCats();
+}
+
+function cleanupDragListeners(element) {
+  if (!element) return;
+
+  element.classList.remove("dragging");
+  element.removeEventListener("pointermove", onCatPointerMove);
+  element.removeEventListener("pointerup", onCatPointerUp);
+  element.removeEventListener("pointercancel", onCatPointerCancel);
+  $$(".field-cat.merge-ready", gameField).forEach(el => el.classList.remove("merge-ready"));
+}
+
+function mergeCats(sourceUid, targetUid) {
+  const source = getCatInstance(sourceUid);
+  const target = getCatInstance(targetUid);
+
+  if (!source || !target || source.uid === target.uid || source.level !== target.level) {
+    renderCats();
+    return;
+  }
+
+  if (source.level >= CONFIG.MAX_LEVEL) {
+    showToast("Максимальный уровень уже достигнут 👑", "warning");
+    renderCats();
+    return;
+  }
+
+  const newLevel = source.level + 1;
+  const newX = (source.x + target.x) / 2;
+  const newY = (source.y + target.y) / 2;
+
+  state.cats = state.cats.filter(cat => cat.uid !== sourceUid && cat.uid !== targetUid);
+  state.cats.push({ uid: uid(), level: newLevel, x: newX, y: newY });
+
+  const wasNew = openLevel(newLevel);
+
+  if (newLevel > state.highestUnlockedLevel) {
+    state.highestUnlockedLevel = newLevel;
+  }
+
+  renderCats();
+  renderBuyButton();
+  showToast(`Merge! ${getCatData(newLevel).emoji} Lv.${newLevel}`, "success");
+
+  if (wasNew) {
+    window.setTimeout(() => {
+      showToast(`Новый кот открыт: ${getCatData(newLevel).name}! ✨`, "success");
+    }, 180);
+  }
+
+  scheduleSave();
+}
+
+function buyNewCat() {
+  const level = getBuyLevel();
+  const price = CONFIG.FORMULAS.buyPrice(level);
+
+  if (state.coins < price) {
+    showToast(`Не хватает ${formatNumber(price - state.coins)} 🪙`, "warning");
+    return;
+  }
+
+  state.coins -= price;
+
+  state.cats.push({
+    uid: uid(),
+    level,
+    x: randomBetween(CONFIG.BUY.RANDOM_X_MIN, CONFIG.BUY.RANDOM_X_MAX),
+    y: randomBetween(CONFIG.BUY.RANDOM_Y_MIN, CONFIG.BUY.RANDOM_Y_MAX)
+  });
+
+  renderStats();
+  renderCats();
+  showToast(`${getCatData(level).emoji} Куплен кот Lv.${level}`, "success");
+  scheduleSave();
+}
+
+function openModal(element) { element.classList.remove("hidden"); }
+function closeModal(element) { element.classList.add("hidden"); }
+function closeAllModals() { $$(".modal-backdrop").forEach(modal => modal.classList.add("hidden")); }
+
+$$("[data-close-modal]").forEach(button => {
+  button.addEventListener("click", () => {
+    const modal = document.getElementById(button.dataset.closeModal);
+    if (modal) closeModal(modal);
+  });
+});
+
+$$(".modal-backdrop").forEach(backdrop => {
+  backdrop.addEventListener("pointerdown", event => {
+    if (event.target === backdrop) closeModal(backdrop);
+  });
+});
+
+function renderCollection() {
+  const opened = getOpenedSet();
+  collectionProgress.textContent = `Открыто ${opened.size} / ${CONFIG.MAX_LEVEL}`;
+  const fragment = document.createDocumentFragment();
+
+  for (const cat of CATS) {
+    const unlocked = opened.has(cat.id);
+    const card = document.createElement("div");
+    card.className = "collection-card" + (unlocked ? "" : " locked");
+
+    card.innerHTML = `
+      <div class="collection-emoji-wrap">
+        ${catVisualHTML(cat, "collection-emoji")}
+      </div>
+      <div>
+        <div class="collection-name">${unlocked ? cat.name : "???"}</div>
+        <div class="collection-power">
+          ${unlocked ? `Power ${formatNumber(cat.power)}` : `Lv.${cat.id}`}
+        </div>
+      </div>
+    `;
+
+    fragment.appendChild(card);
+  }
+
+  collectionGrid.replaceChildren(fragment);
+}
+
+function showResetConfirmation(show) {
+  resetConfirmBox.classList.toggle("hidden", !show);
+}
+
+function resetProgress() {
+  try { localStorage.removeItem(CONFIG.SAVE_KEY); } catch (_) {}
+
+  state = createDefaultState();
+  teamSelection = [];
+
+  closeAllModals();
+  exhibitionOverlay.classList.add("hidden");
+  showResetConfirmation(false);
+
+  renderMainUI();
+  renderCats();
+  saveStateImmediately();
+  showToast("Прогресс сброшен", "success");
+}
+
+let teamSelection = [];
+
+function getFieldLevelCounts() {
+  const counts = new Map();
+  for (const cat of state.cats) {
+    counts.set(cat.level, (counts.get(cat.level) || 0) + 1);
+  }
+  return counts;
+}
+
+function getSelectedLevelCount(level) {
+  return teamSelection.filter(selected => selected === level).length;
+}
+
+function openTeamSelector() {
+  teamSelection = [];
+  renderTeamSelector();
+  openModal(teamModal);
+}
+
+function renderTeamSelector() {
+  renderTeamSlots();
+  renderTeamCatList();
+  exhibitionStartButton.disabled = teamSelection.length !== CONFIG.BATTLE.TEAM_SIZE;
+}
+
+function renderTeamSlots() {
+  const fragment = document.createDocumentFragment();
+
+  for (let index = 0; index < CONFIG.BATTLE.TEAM_SIZE; index++) {
+    const level = teamSelection[index];
+    const column = document.createElement("div");
+    column.className = "team-slot-column";
+
+    const slot = document.createElement("div");
+    slot.className = "team-slot" + (level ? " filled" : "");
+
+    if (level) {
+      const cat = getCatData(level);
+      slot.innerHTML = `
+        ${catVisualHTML(cat, "team-slot-emoji")}
+        <div class="team-slot-label">Lv.${level} · ${formatNumber(cat.power)}</div>
+      `;
+    } else {
+      slot.innerHTML = `<div class="team-slot-placeholder">＋</div>`;
     }
 
-    function endDrag(event) {
-      if (!drag || event.pointerId !== drag.pointerId) return;
-      const draggedId = drag.id;
-      const element = drag.element;
-      element.classList.remove("dragging");
-      element.removeEventListener("pointermove", moveDrag);
-      element.removeEventListener("pointerup", endDrag);
-      element.removeEventListener("pointercancel", endDrag);
-      drag = null;
+    column.appendChild(slot);
 
-      const draggedCat = state.cats.find(item => item.id === draggedId);
-      if (!draggedCat) return;
-      const mergeTarget = findMergeTarget(draggedCat, element.offsetWidth * 0.72);
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "slot-remove" + (level ? "" : " placeholder");
+    remove.textContent = "✕";
+    remove.setAttribute("aria-label", `Убрать кота из слота ${index + 1}`);
 
-      if (mergeTarget && draggedCat.level < MAX_CAT_LEVEL) {
-        mergeCats(draggedCat, mergeTarget);
-      } else if (mergeTarget) {
-        showToast("Это уже максимальный уровень!");
-      }
+    if (level) {
+      remove.addEventListener("click", () => {
+        teamSelection.splice(index, 1);
+        renderTeamSelector();
+      });
     }
 
-    function findMergeTarget(draggedCat, thresholdPx) {
-      const rect = scene.getBoundingClientRect();
-      let closest = null;
-      let closestDistance = Infinity;
+    column.appendChild(remove);
+    fragment.appendChild(column);
+  }
 
-      for (const candidate of state.cats) {
-        if (candidate.id === draggedCat.id || candidate.level !== draggedCat.level) continue;
-        const dx = (candidate.x - draggedCat.x) / 100 * rect.width;
-        const dy = (candidate.y - draggedCat.y) / 100 * rect.height;
-        const distance = Math.hypot(dx, dy);
-        if (distance <= thresholdPx && distance < closestDistance) {
-          closest = candidate;
-          closestDistance = distance;
-        }
-      }
-      return closest;
+  teamSlots.replaceChildren(fragment);
+}
+
+function renderTeamCatList() {
+  const counts = getFieldLevelCounts();
+  const levels = [...counts.keys()].sort((a, b) => b - a);
+  const fragment = document.createDocumentFragment();
+
+  if (levels.length === 0) {
+    const empty = document.createElement("div");
+    empty.style.padding = "20px";
+    empty.style.color = "var(--muted)";
+    empty.textContent = "На поле пока нет котиков.";
+    fragment.appendChild(empty);
+  }
+
+  for (const level of levels) {
+    const cat = getCatData(level);
+    const total = counts.get(level);
+    const selected = getSelectedLevelCount(level);
+    const remaining = total - selected;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "team-cat-card";
+    button.disabled =
+      teamSelection.length >= CONFIG.BATTLE.TEAM_SIZE ||
+      remaining <= 0;
+
+    button.innerHTML = `
+      ${catVisualHTML(cat, "team-card-emoji")}
+      <div>
+        <div class="team-card-name">${cat.name} · Lv.${level}</div>
+        <div class="team-card-power">Power ${formatNumber(cat.power)}</div>
+      </div>
+      <div class="team-card-count">
+        x${total}${selected ? ` · ${remaining} left` : ""}
+      </div>
+    `;
+
+    button.addEventListener("click", () => {
+      if (teamSelection.length >= CONFIG.BATTLE.TEAM_SIZE) return;
+
+      const currentCounts = getFieldLevelCounts();
+      const available = currentCounts.get(level) || 0;
+
+      if (getSelectedLevelCount(level) >= available) return;
+
+      teamSelection.push(level);
+      renderTeamSelector();
+    });
+
+    fragment.appendChild(button);
+  }
+
+  teamCatList.replaceChildren(fragment);
+}
+
+function calculatePressure() {
+  const comfort = CONFIG.FORMULAS.comfortCups(state.highestUnlockedLevel);
+  const raw = comfort > 0 ? state.cups / comfort : 0;
+
+  return clamp(
+    raw * CONFIG.BATTLE.PRESSURE_SCALE,
+    0,
+    CONFIG.BATTLE.PRESSURE_MAX
+  );
+}
+
+function calculateNewbieAssist() {
+  const limit = CONFIG.BATTLE.NEWBIE_ASSIST_UNTIL_LEVEL;
+  if (state.highestUnlockedLevel >= limit) return 0;
+
+  const remaining =
+    1 - (state.highestUnlockedLevel - 1) / Math.max(1, limit - 1);
+
+  return CONFIG.BATTLE.NEWBIE_ASSIST_MAX_LEVEL_REDUCTION * clamp(remaining, 0, 1);
+}
+
+function calculateLossAssist() {
+  return Math.min(
+    CONFIG.BATTLE.LOSS_ASSIST_MAX_LEVEL_REDUCTION,
+    state.lossStreak * CONFIG.BATTLE.LOSS_ASSIST_LEVEL_PER_STREAK
+  );
+}
+
+function findEquivalentLevelForPower(power) {
+  let bestLevel = 1;
+  let bestDifference = Infinity;
+
+  for (let level = 1; level <= CONFIG.MAX_LEVEL; level++) {
+    const difference = Math.abs(CONFIG.FORMULAS.power(level) - power);
+
+    if (difference < bestDifference) {
+      bestDifference = difference;
+      bestLevel = level;
     }
 
-    function mergeCats(first, second) {
-      const position = {
-        x: (first.x + second.x) / 2,
-        y: (first.y + second.y) / 2
-      };
-      const newLevel = first.level + 1;
+    if (CONFIG.FORMULAS.power(level) > power && difference > bestDifference) break;
+  }
 
-      state.cats = state.cats.filter(cat => cat.id !== first.id && cat.id !== second.id);
-      addCat(newLevel, position);
-      showMergeBurst(position.x, position.y);
-      showToast(`Открыт мяухрустик ${newLevel} уровня!`);
-      render();
+  return bestLevel;
+}
+
+function interpolateOpponentOffsets(pressure) {
+  const profiles = CONFIG.BATTLE.PRESSURE_PROFILES;
+
+  if (pressure <= profiles[0].pressure) return [...profiles[0].offsets];
+
+  const last = profiles[profiles.length - 1];
+  if (pressure >= last.pressure) return [...last.offsets];
+
+  for (let i = 0; i < profiles.length - 1; i++) {
+    const a = profiles[i];
+    const b = profiles[i + 1];
+
+    if (pressure >= a.pressure && pressure <= b.pressure) {
+      const t = (pressure - a.pressure) / (b.pressure - a.pressure);
+      return a.offsets.map((offset, index) => lerp(offset, b.offsets[index], t));
+    }
+  }
+
+  return [...profiles[0].offsets];
+}
+
+function calculateOpponentModel(playerLevels) {
+  const playerPowerAverage =
+    playerLevels.reduce((sum, level) => sum + CONFIG.FORMULAS.power(level), 0) /
+    playerLevels.length;
+
+  const teamEquivalentLevel = findEquivalentLevelForPower(playerPowerAverage);
+  const influence = CONFIG.BATTLE.PLAYER_TEAM_INFLUENCE;
+
+  const progressionLevel = lerp(
+    state.highestUnlockedLevel,
+    teamEquivalentLevel,
+    influence
+  );
+
+  const pressure = calculatePressure();
+  const newbieAssist = calculateNewbieAssist();
+  const lossAssist = calculateLossAssist();
+
+  const hiddenAdvantage =
+    CONFIG.BATTLE.PLAYER_HIDDEN_LEVEL_ADVANTAGE *
+    (1 - clamp(pressure / 1.2, 0, 1));
+
+  const pressureLevelLift =
+    pressure *
+    CONFIG.BATTLE.MAX_OPPONENT_LEVEL_BONUS_AT_FULL_PRESSURE *
+    0.55;
+
+  const baseTarget =
+    progressionLevel +
+    pressureLevelLift -
+    newbieAssist -
+    lossAssist -
+    hiddenAdvantage;
+
+  const maxOpponentLevel = clamp(
+    Math.ceil(
+      state.highestUnlockedLevel +
+      pressure * CONFIG.BATTLE.MAX_OPPONENT_LEVEL_BONUS_AT_FULL_PRESSURE
+    ),
+    1,
+    CONFIG.MAX_LEVEL
+  );
+
+  return {
+    pressure,
+    newbieAssist,
+    lossAssist,
+    teamEquivalentLevel,
+    baseTarget,
+    maxOpponentLevel
+  };
+}
+
+function createOpponentTeam(name, centerLevel, maxOpponentLevel) {
+  const teamCenter =
+    centerLevel +
+    randomBetween(
+      -CONFIG.BATTLE.TEAM_CENTER_RANDOM_JITTER,
+      CONFIG.BATTLE.TEAM_CENTER_RANDOM_JITTER
+    );
+
+  const levels = [];
+
+  for (let i = 0; i < CONFIG.BATTLE.TEAM_SIZE; i++) {
+    const jitter = randomItem(CONFIG.BATTLE.CAT_LEVEL_JITTER);
+    levels.push(
+      clamp(
+        Math.round(teamCenter + jitter),
+        1,
+        maxOpponentLevel
+      )
+    );
+  }
+
+  levels.sort((a, b) => b - a);
+
+  const totalPower = levels.reduce(
+    (sum, level) => sum + CONFIG.FORMULAS.power(level),
+    0
+  );
+
+  return {
+    id: uid(),
+    name,
+    isPlayer: false,
+    levels,
+    totalPower
+  };
+}
+
+function generateOpponentTeams(playerLevels) {
+  const model = calculateOpponentModel(playerLevels);
+  const offsets = interpolateOpponentOffsets(model.pressure);
+  const opponentNames = ["Соперник A", "Соперник B", "Соперник C", "Соперник D"];
+
+  const teams = offsets.map((offset, index) => {
+    const center = model.baseTarget + offset;
+    return createOpponentTeam(
+      opponentNames[index],
+      center,
+      model.maxOpponentLevel
+    );
+  });
+
+  return { teams, model };
+}
+
+function calculateCupReward(place) {
+  const base = CONFIG.FORMULAS.cupRewardBase(state.highestUnlockedLevel);
+  const range = CONFIG.CUP_REWARDS.PLACE_RANGES[place] || [0, 0];
+  const factor = randomBetween(range[0], range[1]);
+  return Math.max(0, Math.round(base * factor));
+}
+
+function runExhibition() {
+  if (teamSelection.length !== CONFIG.BATTLE.TEAM_SIZE) return;
+
+  const counts = getFieldLevelCounts();
+
+  for (const level of new Set(teamSelection)) {
+    if (getSelectedLevelCount(level) > (counts.get(level) || 0)) {
+      showToast("Состав команды изменился — выбери котиков заново", "warning");
+      renderTeamSelector();
+      return;
+    }
+  }
+
+  const playerLevels = [...teamSelection];
+
+  const playerTotalPower = playerLevels.reduce(
+    (sum, level) => sum + CONFIG.FORMULAS.power(level),
+    0
+  );
+
+  const playerTeam = {
+    id: "player",
+    name: "Вы",
+    isPlayer: true,
+    levels: playerLevels,
+    totalPower: playerTotalPower
+  };
+
+  const generated = generateOpponentTeams(playerLevels);
+  const allTeams = [playerTeam, ...generated.teams];
+
+  allTeams.sort((a, b) => {
+    if (b.totalPower !== a.totalPower) return b.totalPower - a.totalPower;
+    if (a.isPlayer && !b.isPlayer) return -1;
+    if (b.isPlayer && !a.isPlayer) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const playerPlace = allTeams.findIndex(team => team.isPlayer) + 1;
+  const reward = calculateCupReward(playerPlace);
+
+  state.cups += reward;
+
+  if (playerPlace <= 2) {
+    state.lossStreak = 0;
+  } else {
+    state.lossStreak += 1;
+  }
+
+  state.resultHistory.push({
+    timestamp: Date.now(),
+    place: playerPlace,
+    reward,
+    highestLevel: state.highestUnlockedLevel,
+    cupsAfter: state.cups,
+    pressure: generated.model.pressure
+  });
+
+  state.resultHistory = state.resultHistory.slice(-CONFIG.HISTORY.MAX_RESULTS);
+
+  closeModal(teamModal);
+  renderExhibition(allTeams, playerPlace, reward);
+  renderStats();
+
+  if (reward > 0) {
+    window.setTimeout(() => {
+      showToast(`+${reward} 🏆`, "success");
+    }, 220);
+  }
+
+  scheduleSave();
+}
+
+function renderExhibition(rankedTeams, playerPlace, reward) {
+  playerPlaceText.textContent = `Ваше место: ${playerPlace} из 5`;
+  playerRewardText.textContent =
+    reward > 0 ? `Награда: +${reward} 🏆` : "Награда: без кубков";
+
+  const teamsFragment = document.createDocumentFragment();
+
+  rankedTeams.forEach((team, index) => {
+    const card = document.createElement("div");
+    card.className = "result-team-card" + (team.isPlayer ? " player" : "");
+
+    const catVisuals = team.levels
+      .map(level => catVisualHTML(level, "result-cat-image"))
+      .join("");
+    const levelsText = team.levels.map(level => `Lv.${level}`).join(" · ");
+
+    card.innerHTML = `
+      <div class="result-place">${index + 1}</div>
+      <div class="result-name">${team.isPlayer ? "⭐ Вы" : team.name}</div>
+      <div class="result-cats">${catVisuals}</div>
+      <div class="result-rating">⚡ ${formatNumber(team.totalPower)}</div>
+      <div class="result-levels">${levelsText}</div>
+    `;
+
+    teamsFragment.appendChild(card);
+  });
+
+  exhibitionTeams.replaceChildren(teamsFragment);
+
+  const tableFragment = document.createDocumentFragment();
+
+  rankedTeams.forEach((team, index) => {
+    const row = document.createElement("div");
+    row.className = "standing-row" + (team.isPlayer ? " player" : "");
+
+    row.innerHTML = `
+      <div class="standing-place">${index + 1}.</div>
+      <div class="standing-name">${team.isPlayer ? "⭐ Вы" : team.name}</div>
+      <div class="standing-power">⚡ ${formatNumber(team.totalPower)}</div>
+    `;
+
+    tableFragment.appendChild(row);
+  });
+
+  standingsList.replaceChildren(tableFragment);
+  exhibitionOverlay.classList.remove("hidden");
+  exhibitionOverlay.scrollTop = 0;
+}
+
+let previousFrameTime = performance.now();
+let lastDecaySaveAt = performance.now();
+
+function clickBarAnimationLoop(now) {
+  const deltaSeconds = Math.min(
+    0.1,
+    Math.max(0, (now - previousFrameTime) / 1000)
+  );
+
+  previousFrameTime = now;
+
+  const sinceLastClick = Date.now() - state.lastClickAt;
+
+  if (
+    state.clickBar > 0 &&
+    sinceLastClick > CONFIG.CLICK_BAR.DECAY_DELAY_MS
+  ) {
+    const previousBar = state.clickBar;
+
+    state.clickBar = clamp(
+      state.clickBar -
+      CONFIG.CLICK_BAR.DECAY_PER_SECOND * deltaSeconds,
+      CONFIG.CLICK_BAR.MIN,
+      CONFIG.CLICK_BAR.MAX
+    );
+
+    if (Math.abs(previousBar - state.clickBar) > 0.001) {
+      renderClickBar();
     }
 
-    function showCoinPop(x, y, amount) {
-      const pop = document.createElement("span");
-      pop.className = "coin-pop";
-      pop.style.left = `${x}%`;
-      pop.style.top = `${y}%`;
-      pop.textContent = `+${amount}`;
-      scene.append(pop);
-      pop.addEventListener("animationend", () => pop.remove());
+    if (now - lastDecaySaveAt > 1200) {
+      lastDecaySaveAt = now;
+      scheduleSave();
     }
+  }
 
-    function showMergeBurst(x, y) {
-      const burst = document.createElement("span");
-      burst.className = "merge-burst";
-      burst.style.left = `${x}%`;
-      burst.style.top = `${y}%`;
-      scene.append(burst);
-      burst.addEventListener("animationend", () => burst.remove());
-    }
+  requestAnimationFrame(clickBarAnimationLoop);
+}
 
-    function showToast(message) {
-      clearTimeout(toastTimer);
-      toast.textContent = message;
-      toast.classList.add("show");
-      toastTimer = setTimeout(() => toast.classList.remove("show"), 1600);
-    }
+buyButton.addEventListener("click", buyNewCat);
 
-    buyButton.addEventListener("click", buyCat);
-    render();
-  </script>
+collectionButton.addEventListener("click", () => {
+  renderCollection();
+  openModal(collectionModal);
+});
+
+settingsButton.addEventListener("click", () => {
+  showResetConfirmation(false);
+  applySettings();
+  openModal(settingsModal);
+});
+
+battleButton.addEventListener("click", openTeamSelector);
+
+reduceMotionToggle.addEventListener("change", () => {
+  state.settings.reduceMotion = reduceMotionToggle.checked;
+  applySettings();
+  scheduleSave();
+});
+
+resetProgressButton.addEventListener("click", () => {
+  showResetConfirmation(true);
+});
+
+cancelResetButton.addEventListener("click", () => {
+  showResetConfirmation(false);
+});
+
+confirmResetButton.addEventListener("click", resetProgress);
+exhibitionStartButton.addEventListener("click", runExhibition);
+
+backToGameButton.addEventListener("click", () => {
+  exhibitionOverlay.classList.add("hidden");
+  teamSelection = [];
+});
+
+window.addEventListener("beforeunload", saveStateImmediately);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    saveStateImmediately();
+  }
+});
+
+window.addEventListener("keydown", event => {
+  if (event.key !== "Escape") return;
+
+  if (!exhibitionOverlay.classList.contains("hidden")) {
+    exhibitionOverlay.classList.add("hidden");
+    return;
+  }
+
+  const openedModal = $$(".modal-backdrop").find(
+    modal => !modal.classList.contains("hidden")
+  );
+
+  if (openedModal) closeModal(openedModal);
+});
+
+function initializeGame() {
+  applyConfigToCSS();
+  applyOfflineClickDecay();
+  renderMainUI();
+  renderCats();
+  saveStateImmediately();
+  requestAnimationFrame(clickBarAnimationLoop);
+}
+
+initializeGame();
+</script>
 </body>
 </html>
